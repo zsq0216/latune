@@ -1,0 +1,510 @@
+import subprocess
+import re
+from typing import Dict, List, Tuple, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+import requests
+import psutil
+import numpy as np
+import pandas as pd
+import csv
+import itertools
+import logging
+
+class LlamaExecutor:
+    def __init__(self, 
+                 param_types: Dict[str, str],
+                 model_path: Optional[str] = "./../models/qwen3-8b-q4.gguf",
+                 device: str = "gpu",
+                 default_prompt: str = "I believe the meaning of life is",
+                 ):
+        """
+        :param param_types: 参数字典，记录参数类型（用于构建命令行参数）
+        :param model_path: 模型文件默认路径
+        :param default_prompt: 默认使用的提示语
+        """
+        self.param_types = param_types
+        self.default_prompt = default_prompt
+        self.model_path = model_path
+        self.device = device
+        self.stop_event = None
+        self.server_process = None
+        self.prompt_list = [
+            "How much should I charge for web design by hour with profit if I need to make $8000 a month",
+            "Please introduce yourself", 
+            "How should CSP headers be set in a php website in the interest of web application security"
+            "jeffrey and Sarah found one last CRT TV he didn\u2019t sell online, and they deepen their commitment to each other while playing retro games on it",
+            "how to grant select method to a user on a table in oracle?",
+            "what other ways do I have to identify what table to write to instead of dlp api?",
+            "what if I use column names and order to determine the table?",
+            "what exactly is breath control?",
+            "suggest images for the post",
+            "Write linkedin post from the University of Manchester wishing ramadan kareem",
+            "Generate some popular hashtags",
+            "I need your help writing an article. I will provide you with some background information to begin with. And then I will provide you with directions to help me write the article.",
+            "What could be a cool teamname for the Continuous Engineering Unit."
+            # "what could CEU Stand for in Spain",
+            # "What could it stand for releated to IT development",
+            # "What is a short name for Continuous Engineering Unit",
+            # "Is there another cool way",
+            # "What political party does Narendra Modi belong to?"
+        ]
+        print(f"Using device: {self.device}")
+
+        
+    def generate_configs(self, performance_params, n_samples=100):
+        """生成随机配置样本"""
+        configs = []
+        for _ in range(n_samples):
+            config = {}
+            # 遍历字典的键值对 (name, param_info)
+            for name, param_info in performance_params.items():  # 关键修改点
+                param_type = param_info['type']  # 从 param_info 获取类型
+                if param_type == 'boolean':
+                    config[name] = np.random.choice([True, False])
+                elif param_type == 'integer':
+                    config[name] = np.random.randint(param_info['values']['min'], param_info['values']['max'] + 1)
+                elif param_type == 'enum':
+                    config[name] = np.random.choice(param_info['values'])
+                elif param_type == 'float':
+                    config[name] = np.random.uniform(param_info['values']['min'], param_info['values']['max'])
+            # config = self.handle_dependency(config)
+            configs.append(config)
+        return configs
+    
+    def generate_configs_fixed(self, performance_params, n_samples=100, seed=42):
+        """生成随机配置样本（可复现）"""
+        # 固定随机种子：每次调用都会从相同的随机序列开始
+        rng = np.random.default_rng(seed)
+
+        configs = []
+        # 可选：为了让“随机数消耗顺序”也稳定，按 key 排序（避免 dict 构造顺序影响）
+        items = sorted(performance_params.items())
+
+        for _ in range(n_samples):
+            config = {}
+            for name, param_info in items:
+                param_type = param_info['type']
+                if param_type == 'boolean':
+                    # rng.integers 更快，也可用 rng.choice([True, False])
+                    config[name] = bool(rng.integers(0, 2))
+                elif param_type == 'integer':
+                    lo = param_info['values']['min']
+                    hi = param_info['values']['max'] + 1  # 上界开区间
+                    config[name] = int(rng.integers(lo, hi))
+                elif param_type == 'enum':
+                    config[name] = rng.choice(param_info['values'])
+                elif param_type == 'float':
+                    lo = param_info['values']['min']
+                    hi = param_info['values']['max']
+                    config[name] = float(rng.uniform(lo, hi))
+                else:
+                    raise ValueError(f"未知类型: {param_type}")
+            configs.append(config)
+        return configs
+
+    def handle_dependency(self, config):
+        #config['grp-attn-w']=config['grp-attn-n']的整数倍
+        # if config['grp-attn-n'] absent
+        if 'grp-attn-n' not in config:
+            return config
+        
+        max_multiplier = 2048 // config['grp-attn-n'] # 2048是grp-attn-w最大值
+        config['grp-attn-w'] = config['grp-attn-n'] * max_multiplier
+        return config
+
+    def _build_server_command(self, config: Dict, model_path: str) -> List[str]:
+        """构建命令行参数列表"""
+        cmd = [
+            f"./../llama.cpp/build{self.device}/bin/llama-server",
+            "-m", model_path,
+            "--host", config.get("host", "127.0.0.1"),
+            "--port", str(config.get("port", 8080))
+        ]
+        
+        for param, value in config.items():
+            param_type = self.param_types.get(param, "unknown")
+            if param_type == "boolean":
+                if value:
+                    cmd.append(f"--{param}")
+            else:
+                cmd.extend([f"--{param}", str(value)])
+        return cmd
+
+    @staticmethod
+    def _run_with_realtime_output(cmd: List[str]) -> Tuple[str, str]:
+        """执行子进程并捕获输出"""
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        stdout_output, stderr_output = process.communicate()
+        return stdout_output, stderr_output
+
+    @staticmethod
+    def _metrics_parser(output: str) -> float:
+        """解析性能指标输出"""
+        # 匹配 eval time
+        eval_time_match = re.search(
+            r"llama_perf_context_print:\s+eval time =\s+([\d.]+) ms /\s+\d+ runs\s+\(\s+([\d.]+) ms",
+            output, 
+            re.MULTILINE
+        )
+        
+        if not eval_time_match:
+            raise ValueError("Failed to parse metrics from output")
+            
+        eval_time_per_token = float(eval_time_match.group(2))
+        print(1 / eval_time_per_token * 1000)
+        return 1 / eval_time_per_token * 1000  # 转换为tokens/s
+
+    def _start_server_and_metrics_thread(self, config, model_path):
+        try:
+            self.server_process = self._run_llama_server(config = config, model_path = model_path)
+        except TimeoutError as e:
+            print(e)
+            raise ValueError(e)
+
+        resource_metrics = []
+        from threading import Thread, Event
+        self.stop_event = Event()
+
+        def collect_metrics():
+            while not self.stop_event.is_set():
+                metrics = self.collect_server_metrics(self.server_process)
+                metrics['timestamp'] = time.time()
+                resource_metrics.append(metrics)
+                time.sleep(0.5)
+
+        thread = Thread(target=collect_metrics)
+        thread.start()
+
+        return thread, resource_metrics
+
+    def _send_request_batch(self, prompts, config):
+        tps_list, pps_list = [], []
+        for prompt in prompts:
+            try:
+                tps, pps = self.send_request_to_server(
+                    prompt=prompt,
+                    port=config.get('port', 8080),
+                    max_tokens=128
+                )
+                tps_list.append(tps)
+                pps_list.append(pps)
+            except Exception as e:
+                print(f"Request failed: {str(e)}")
+        return tps_list, pps_list
+    
+    def _send_requests_concurrently(
+        self, prompts: List[str], config: Dict, max_workers: int = 8
+        ) -> Tuple[List[float], List[float]]:
+        """
+        并发地发送多条请求；返回与 prompts 对齐的 tps_list / pps_list。
+        """
+        n = len(prompts)
+        tps_list: List[Optional[float]] = [None] * n
+        pps_list: List[Optional[float]] = [None] * n
+
+        def _task(idx: int, prompt: str) -> Tuple[int, float, float]:
+            tps_batch, pps_batch = self._send_request_batch([prompt], config)
+            # batch 保证至少返回一条结果
+            return idx, tps_batch[0], pps_batch[0]
+
+        start_all = time.perf_counter()
+        # 根据场景选择合适的并发度；I/O 型任务 4~16 都常见
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = [pool.submit(_task, i, p) for i, p in enumerate(prompts)]
+            for fut in as_completed(futures):
+                try:
+                    idx, tps, pps = fut.result()
+                    tps_list[idx] = tps
+                    pps_list[idx] = pps
+                except Exception as e:
+                    logging.exception("Request failed: %s", e)
+                    # 失败位置填默认值，避免后续汇总报错
+                    # 也可以选择重试，这里先给 0
+                    # 你也可以把 None 留给 _summarize_metrics 去过滤
+                    idx = futures.index(fut)
+                    tps_list[idx] = 0.0
+                    pps_list[idx] = 0.0
+        end_all = time.perf_counter()
+        print(f"All {n} requests completed in {end_all - start_all:.2f} seconds")
+
+        # 类型收紧（如果用了 None，记得在 summarize 里做过滤）
+        return [float(x or 0.0) for x in tps_list], [float(x or 0.0) for x in pps_list]
+
+
+    def _summarize_metrics(self, resource_metrics, tps_list, pps_list):
+        cpu = [m.get('cpu_percent', 0) for m in resource_metrics]
+        mem = [m.get('memory_mb', 0) for m in resource_metrics]
+        gpu = [m.get('gpu_mem', 0) for m in resource_metrics]
+
+        return {
+            'tps_avg': np.mean(tps_list) if tps_list else 0,
+            'pps_avg': np.mean(pps_list) if pps_list else 0,
+            'cpu_avg': np.mean(cpu) if cpu else 0,
+            'mem_avg': np.mean(mem) if mem else 0,
+            'gpu_avg': np.mean(gpu) if gpu else 0
+        }
+
+    def run_server_performance_test(self, config: Dict, num_requests: int = 3,
+                                    model_path: Optional[str] = None) -> Dict:
+        model_path = model_path or self.model_path
+        thread = None
+        try:
+            thread, metrics = self._start_server_and_metrics_thread(config, model_path)
+            prompts = self.prompt_list[:num_requests]
+            tps_list, pps_list = self._send_request_batch(prompts, config)
+            time.sleep(0.5)
+        finally:
+            if self.stop_event:
+                self.stop_event.set()
+            if thread is not None:
+                thread.join()
+            if hasattr(self, 'server_process') and self.server_process is not None:
+                self.server_process.terminate()
+
+        return self._summarize_metrics(metrics, tps_list, pps_list)
+
+    def run_server_performance_concurrently_test(self, config: Dict, num_requests: int = 10,
+                                    model_path: Optional[str] = None) -> Dict:
+        model_path = model_path or self.model_path
+        thread = None
+        try:
+            thread, metrics = self._start_server_and_metrics_thread(config, model_path)
+            prompts = self.prompt_list[:num_requests]
+            tps_list, pps_list = self._send_requests_concurrently(prompts, config)
+            time.sleep(0.5)
+        finally:
+            if self.stop_event:
+                self.stop_event.set()
+            if thread is not None:
+                thread.join()
+            if hasattr(self, 'server_process') and self.server_process is not None:
+                self.server_process.terminate()
+
+        return self._summarize_metrics(metrics, tps_list, pps_list)
+
+    # def run_server_performance_test_streaming(self, config: Dict,
+    #                                         model_path: Optional[str] = None):
+    #     thread, metrics = self._start_server_and_metrics_thread(config, model_path)
+
+    #     try:
+    #         batch_tps, batch_pps = [], []
+    #         for i, prompt in enumerate(itertools.cycle(self.prompt_list[:3])):
+    #             try:
+    #                 tps, pps = self.send_request_to_server(
+    #                     prompt=prompt,
+    #                     port=config.get('port', 8080),
+    #                     max_tokens=128
+    #                 )
+    #                 batch_tps.append(tps)
+    #                 batch_pps.append(pps)
+    #             except Exception as e:
+    #                 print(f"Request failed: {str(e)}")
+
+    #             if (i + 1) % 3 == 0:
+    #                 yield self._summarize_metrics(metrics, batch_tps, batch_pps)
+    #                 batch_tps.clear()
+    #                 batch_pps.clear()
+    #     finally:
+    #         self.stop_event.set()
+    #         thread.join()
+    #         self.server_process.terminate()
+
+    
+    def _run_llama_server(self, config: Dict, model_path: Optional[str] = None) -> subprocess.Popen:
+        """启动llama.cpp服务器进程"""
+        model_path = model_path
+        cmd = self._build_server_command(config=config, model_path = model_path)
+        # print(cmd)
+            
+        server_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8"
+        )
+
+        # server_process.communicate()这个会阻塞，只能测试的时候用
+        # stdout_output, stderr_output = server_process.communicate()
+        # print("stdout:", stdout_output)
+        # print("stderr:", stderr_output)
+        
+        # 等待服务器启动
+        self._wait_for_server_ready(config.get("port", 8080), timeout=30)
+        return server_process
+        
+
+    def extract_meta_feature(self, config: Dict, model_path: Optional[str] = None) -> subprocess.Popen:
+        """启动 llama.cpp 服务器进程，收集 stdout/stderr 后立即 kill 掉"""
+        cmd = self._build_server_command(config=config, model_path=model_path)
+
+        server_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8"
+        )
+
+        try:
+            # 等待一段时间读取输出（例如 10 秒），可按需调整
+            stdout_output, stderr_output = server_process.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            # 如果 10 秒内没结束，就强杀并再收集残余输出
+            server_process.kill()
+            stdout_output, stderr_output = server_process.communicate()
+        except Exception as e:
+            logging.exception("Error while running llama server: %s", e)
+            server_process.kill()
+            stdout_output, stderr_output = "", str(e)
+
+        # 这里可以根据需要保存/打印输出
+        # print("stdout:", stdout_output)
+        # print("stderr:", stderr_output)
+
+        # 确保进程被杀
+        if server_process.poll() is None:
+            server_process.kill()
+
+        return stderr_output
+            
+
+    def send_request_to_server(self, prompt: str, port: int = 8080, 
+                            max_tokens: int = 128) -> Tuple[float, int]:
+        """发送HTTP请求到服务器并收集指标"""
+        url = f"http://localhost:{port}/v1/completions"
+        headers = {"Content-Type": "application/json"}
+        
+        payload = {
+            "prompt": prompt,
+            "n_predict": max_tokens,
+        }
+        
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=120)
+            
+            if response.status_code != 200:
+                raise RuntimeError(f"Request failed: {response.text}")
+
+            timings = response.json()['timings']
+            TPS = timings['predicted_per_second']
+            PPS = timings['prompt_per_second']
+            return TPS, PPS
+
+        except requests.exceptions.Timeout:
+            # 超过2分钟未响应，返回1,1
+            return 1, 1
+
+    def collect_server_metrics(self, process: subprocess.Popen) -> Dict:
+        """收集服务器资源指标"""
+        try:
+            proc = psutil.Process(process.pid)
+            proc.cpu_percent(interval=None)  
+            time.sleep(0.1) 
+            if self.device == "gpu": # TODO:refractor device-related
+                gpu_mem = self._get_mac_gpu_memory_usage()# 需实现NVIDIA工具调用
+            else:
+                gpu_mem = self._get_gpu_memory_usage(proc.pid)
+            return {
+                "cpu_percent": proc.cpu_percent()/psutil.cpu_count(logical=True),
+                "system_cpu_percent": psutil.cpu_percent(interval=0.1),
+                "memory_mb": proc.memory_info().rss / 1024 / 1024,
+                "gpu_mem": gpu_mem
+            }
+        except psutil.NoSuchProcess:
+            return {"error": "Process not found"}
+    
+    def _get_gpu_memory_usage(self, pid):
+        """
+        通过 `nvidia-smi` 和 `grep` 直接过滤 PID 的 GPU 显存使用量（单位：MiB）
+        返回：显存使用量（整数），若未找到或出错则返回 0
+        """
+        try:
+            # 将命令拼接为字符串，使用管道符连接 grep
+            cmd = f"nvidia-smi --query-compute-apps=pid,used_gpu_memory --format=csv | grep {pid}"
+            output = subprocess.check_output(
+                cmd, 
+                shell=True,          # 启用 shell 以解析管道符
+                universal_newlines=True,
+                stderr=subprocess.DEVNULL  # 忽略错误输出
+            )
+            
+            # 解析输出并累加显存
+            total_mem = 0
+            for line in output.strip().split("\n"):
+                if not line:
+                    continue
+                parts = line.split(",")
+                if len(parts) >= 2:
+                    mem_str = parts[1].strip().split()[0]  # 提取数值（如 "2500 MiB" -> 2500）
+                    total_mem += int(mem_str)
+            return total_mem
+        except (subprocess.CalledProcessError, ValueError, FileNotFoundError):
+            # 处理无匹配项、命令执行失败、格式错误等异常
+            return 0
+        
+    def _get_mac_gpu_memory_usage(self):
+        """
+        估算 Mac 上 GPU 显存占用（实际上是 wired memory 的一部分）
+        返回：占用的 MB
+        """
+        try:
+            output = subprocess.check_output(["vm_stat"], universal_newlines=True)
+            match = re.search(r"Pages wired down:\s+(\d+)", output)
+            if match:
+                pages = int(match.group(1))
+                # 每页大小（macOS 默认 4096 bytes = 4KB）
+                vram_mb = pages * 4096 / 1024 / 1024
+                return int(vram_mb)
+            return 0
+        except Exception:
+            return 0
+
+    def _wait_for_server_ready(self, port: int, timeout: int = 30):
+        """检测服务器就绪状态"""
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                if requests.get(f"http://localhost:{port}/health").ok:
+                    return
+            except requests.ConnectionError:
+                time.sleep(1)
+        raise TimeoutError("Server startup timed out")
+        
+if __name__ == "__main__":
+    param_types_instance ={'gpu-layers': 'integer',
+                           'parallel': 'integer',
+                           'threads-http': 'integer'}
+    config_list =[
+        {"gpu-layers": 32, "parallel":1, "threads-http":1},
+        {"gpu-layers": 32, "parallel":2, "threads-http":1},
+        {"gpu-layers": 32, "parallel":4, "threads-http":1},
+        {"gpu-layers": 32, "parallel":1, "threads-http":2},
+        {"gpu-layers": 32, "parallel":1, "threads-http":4},
+        {"gpu-layers": 32, "parallel":2, "threads-http":2},
+        {"gpu-layers": 32, "parallel":4, "threads-http":4},
+        {"gpu-layers": 32, "parallel":6, "threads-http":6},
+        {"gpu-layers": 32, "parallel":8, "threads-http":8},
+    ]
+    executor = LlamaExecutor(param_types=param_types_instance,
+                              model_path="./../models/phimoe-mini-q4.gguf",
+                              device="gpu")
+    results = []
+    for config in config_list:
+        print(config)
+        result = executor.run_server_performance_test(config)
+        # 把config拼接到result中
+        # result.update(config)
+        results.append(result)
+        print(result)
+
+
+

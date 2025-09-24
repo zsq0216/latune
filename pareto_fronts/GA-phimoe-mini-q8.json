@@ -1,0 +1,28 @@
+[
+  {
+    "config": {
+      "batch-size": 6453,
+      "ctx-size": 704,
+      "gpu-layers": 70,
+      "ubatch-size": 414,
+      "no-kv-offload": true
+    },
+    "perf": {
+      "tps_avg": 10.764540560578586,
+      "gpu_avg": 1443.611111111111
+    }
+  },
+  {
+    "config": {
+      "batch-size": 3073,
+      "ctx-size": 704,
+      "gpu-layers": 70,
+      "ubatch-size": 414,
+      "no-kv-offload": true
+    },
+    "perf": {
+      "tps_avg": 10.759240064787436,
+      "gpu_avg": 1391.388888888889
+    }
+  }
+]
