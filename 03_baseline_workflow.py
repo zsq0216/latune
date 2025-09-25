@@ -15,6 +15,7 @@ class BaselineWorkflow:
                  max_observations: int = 30,
                  parallel_degree: int = 5,
                  device: str = "gpu",
+                 hardware: str = "m4",
                  model: str = "qwen3-8b",
                  quant: str = "q4"):
         
@@ -32,6 +33,7 @@ class BaselineWorkflow:
             raise ValueError(f"Unknown algorithm: {algorithm}")
         
         self.max_observations = max_observations
+        self.hardwre = hardware,
         self.model = f"./../models/{model}-{quant}.gguf"
         self.parallel_degree = parallel_degree
         self.current_observations = 0
@@ -255,25 +257,26 @@ class BaselineWorkflow:
             for config, perf in self.pareto_front
         ]
 
-        with open(f"pareto_fronts/{method}-{model}.json", 'w', encoding='utf-8') as f:
+        with open(f"pareto_fronts/{self.hardwre}/{method}-{model}.json", 'w', encoding='utf-8') as f:
             json.dump(pareto_serializable, f, indent=2)
-        print(f"Pareto 前沿已保存到 pareto_fronts/{method}-{model}.json")
+        print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardwre}/{method}-{model}.json")
 
-        with open(f"hv_progress/{method}-{model}.json", "w") as f:
+        with open(f"hv_progress/{self.hardwre}/{method}-{model}.json", "w") as f:
             json.dump(self.iter_hv, f, indent=4)
-        print(f"save to hv_progress/{method}-{model}.json")
+        print(f"save to hv_progress/{self.hardwre}/{method}-{model}.json")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                        help='Processing device (cpu or gpu)')
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='m4',
+                       help='Processing hardware')
     parser.add_argument('--method', type=str, choices=['Default', 'GA', 'SCOOT', 'CBO'], default='CBO',
                        help='Processing mothod (GA, SCOOT, CBO)')
     parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
                         help='qwen3-8b, phimoe-mini')
     parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
                         help='q4, q8')
-    # parser.add_argument('--type', type=str, choices=['3060','4090','m4','end'],default='m4')
     args = parser.parse_args()
 
     if args.device == 'gpu':
@@ -282,12 +285,14 @@ if __name__ == "__main__":
         objectives = {'tps_avg': 'max', 'mem_avg': 'min'}
 
     workflow = BaselineWorkflow(
-        parameters_path=f"knobs_files/knobs_{args.model}-{args.quant}.json",
+        parameters_path=f"knobs_files/{args.hardware}_{args.model}-{args.quant}.json",
         known_constraints=[],
         objectives=objectives,
         algorithm=args.method, 
         max_observations=25,
         parallel_degree=5,
+        device=args.device,
+        hardware=args.hardare,
         model = args.model,
         quant = args.quant
     )

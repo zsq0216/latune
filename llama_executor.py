@@ -192,7 +192,7 @@ class LlamaExecutor:
                 tps, pps = self.send_request_to_server(
                     prompt=prompt,
                     port=config.get('port', 8080),
-                    max_tokens=128
+                    max_tokens=64
                 )
                 tps_list.append(tps)
                 pps_list.append(pps)
@@ -378,7 +378,7 @@ class LlamaExecutor:
             
 
     def send_request_to_server(self, prompt: str, port: int = 8080, 
-                            max_tokens: int = 128) -> Tuple[float, int]:
+                            max_tokens: int = 64) -> Tuple[float, int]:
         """发送HTTP请求到服务器并收集指标"""
         url = f"http://localhost:{port}/v1/completions"
         headers = {"Content-Type": "application/json"}
@@ -389,7 +389,7 @@ class LlamaExecutor:
         }
         
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=120)
+            response = requests.post(url, json=payload, headers=headers, timeout=60)
             
             if response.status_code != 200:
                 raise RuntimeError(f"Request failed: {response.text}")

@@ -17,7 +17,8 @@ class TUNINGWorkflow:
                  max_observations: int = 30,
                  parallel_degree: int = 5,
                  device: str = "gpu",
-                 model: str = "qwen3-8b",
+                 hardware: str = "rtx3060",
+                 model: str = "qwen3-4b",
                  quant: str = "q4"):
         """
         :param parameters: 参数空间定义
@@ -31,6 +32,8 @@ class TUNINGWorkflow:
         self.max_observations = max_observations
         self.parallel_degree = parallel_degree
         self.executor = LlamaExecutor(self.tuner.param_types, device=device)
+        self.hardware = hardware
+        self.model_name = f"{model}-{quant}"
         self.model = f"./../models/{model}-{quant}.gguf"
         
         # 工作流程状态跟踪
@@ -40,7 +43,7 @@ class TUNINGWorkflow:
             'performance': []
         }
         self.iter_hv = []
-        self.bounds = {"tps_avg": (0,105), "gpu_avg": (2000,5000)}
+        self.bounds = self._load_metric_bounds(f"bounds/{self.hardware}_{self.model_name}.json")
         self.hv_calc = HypervolumeCalculator(self.bounds)
         
     def run_workflow(self):
@@ -79,13 +82,38 @@ class TUNINGWorkflow:
             self.iter_hv.append(hv)
 
             if self.current_observations >= self.max_observations:
-                self.tuner.save_surrogate("surrogate_models/surrogate_model.pth")
-                self._plot_hv_over_iterations()
+                self.tuner.save_surrogate(f"surrogate_models/{self.hardware}_{self.model_name}.pth")
+                # self._plot_hv_over_iterations()
                 break
 
     def _generate_initial_samples(self) -> List[Dict]:
         """生成初始样本（步骤1）"""
         return self.tuner.generate_initial_samples(5)
+    
+    def _load_metric_bounds(self, path: str) -> Dict[str, Tuple[float, float]]:
+        """
+        从 JSON 文件读取 {"metric": {"min": x, "max": y}, ...}
+        返回 {"metric": (min, max)}，数值会转成 float。
+        无效/缺失的项会被跳过。
+        """
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        out: Dict[str, Tuple[float, float]] = {}
+        for metric, mm in data.items():
+            if not isinstance(mm, dict):
+                continue
+            lo = mm.get("min")
+            hi = mm.get("max")
+            if lo is None or hi is None:
+                continue
+            try:
+                lo = float(lo)
+                hi = float(hi)
+            except (TypeError, ValueError):
+                continue
+            out[metric] = (lo, hi)
+        return out
 
     
     def _evaluate_configs(self, configs: List[Dict], init_model=False):
@@ -275,13 +303,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                        help='Processing device (cpu or gpu)')
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='m4',
+                       help='Processing hardware')
     parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
                         help='qwen3-8b, phimoe-mini')
     parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
                         help='q4, q8')
-    # parser.add_argument('--type', type=str, choices=['3060','4090','m4','end'],default='m4')
     args = parser.parse_args()
-    parameters_path = f"knobs_files/knobs_{args.model}-{args.quant}.json"
+    parameters_path = f"knobs_files/{args.hardware}_{args.model}-{args.quant}.json"
 
     if args.device == 'gpu':
         objectives = {'tps_avg': 'max', 'gpu_avg': 'min'}
@@ -295,6 +324,7 @@ if __name__ == "__main__":
         max_observations=25,
         parallel_degree=5,
         device=args.device,
+        hardware=args.hardware,
         model = args.model,
         quant = args.quant
     )
@@ -307,6 +337,5 @@ if __name__ == "__main__":
     print(f"Total evaluations: {len(workflow.history['configs'])}")
     print(f"Best configuration:")
     # print(workflow.get_best_config())
-    # workflow.visualize_pareto_front()
 
     workflow.save_pareto_front_and_hv(f"{args.model}-{args.quant}")

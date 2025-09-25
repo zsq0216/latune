@@ -12,10 +12,11 @@ import os
 from collections import defaultdict
 
 class LlamaConfigOptimizer:
-    def __init__(self, params_path, device="cpu",model="./../models/qwen3-4b-q4.gguf"):
+    def __init__(self, params_path, device="cpu",model="./../models/qwen3-4b-q4.gguf", hardware="m4"):
         self.params_path = params_path
         self.device = device
         self.model = model
+        self.hardware = hardware
         self.X = None
         self.y = None
         self.performance_params = self._load_params()
@@ -237,7 +238,7 @@ class LlamaConfigOptimizer:
             raise ValueError(f"self.y 中没有找到指标列（候选: {metric_candidates}）。")
 
         if output_path is None:
-            output_path = f"bounds/{model}.json"
+            output_path = f"bounds/{self.hardware}_{model}.json"
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:
@@ -250,14 +251,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                         help='Processing device (cpu or gpu)')
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='m4',
+                       help='Processing hardware')
+    parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
+                        help='qwen3-8b, phimoe-mini')
+    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
+                        help='q4, q8')
     args = parser.parse_args()
 
-    model_name = "phimoe-mini-q4"  # 模型名称
+    model_name = f"{args.model}-{args.quant}"  # 模型名称
 
     optimizer = LlamaConfigOptimizer(
         params_path=f"knobs_files/knobs_raw.json",
         device=args.device,
-        model = f"./../models/{model_name}.gguf"
+        model = f"./../models/{model_name}.gguf",
+
     )
 
     # 生成数据集
@@ -267,8 +275,8 @@ if __name__ == "__main__":
     extrema_json_path = optimizer.save_metric_extrema_from_memory(model_name)
     print(f"Saved metric extrema JSON to: {extrema_json_path}")
 
-    X.to_csv(f"shap_outputs/configs_X_{model_name}.csv", index=False)
-    y.to_csv(f"shap_outputs/configs_y_{model_name}.csv", index=False)
+    X.to_csv(f"shap_outputs/{args.hardware}_X_{model_name}.csv", index=False)
+    y.to_csv(f"shap_outputs/{args.hardware}_y_{model_name}.csv", index=False)
 
     # 训练模型
     optimizer.train_model()
@@ -289,7 +297,7 @@ if __name__ == "__main__":
     print(weighted_param_scores)
 
     # ===== 新增：写 JSON（在原有基础上加 'rank'）=====
-    output_json = f"knobs_files/knobs_{model_name}.json"
+    output_json = f"knobs_files/{args.hardware}_{model_name}.json"
     path = optimizer.write_ranked_params_json(weighted_param_scores, output_json)
     print(f"\nWrote ranked params JSON to: {path}")
 
