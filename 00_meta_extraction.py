@@ -4,9 +4,10 @@ from llama_executor import LlamaExecutor
 import time
 import os
 import json
+import argparse
 
 class MetaFeatureExtractor:
-    def __init__(self, model_name, filepath = "meta_features/records.jsonl"):
+    def __init__(self, model_name, hardware, filepath = "meta_features/records.jsonl"):
         # 字段分组及其手工权重
         self.group_weights = {
             "model": 1,
@@ -18,8 +19,8 @@ class MetaFeatureExtractor:
         self.norm = {}
         self.vector = []
         self.model_name = model_name
+        self.hardware = hardware
         self.filepath = filepath
-        self.gpu_name = ""
 
     @staticmethod
     def _now_ts():
@@ -58,7 +59,6 @@ class MetaFeatureExtractor:
         features["gpu_mem_GB"] = self._extract_float(r"(\d+) MiB free", log_text) / 1024
         features["cpu_threads"] = self._extract_int(r"n_threads\s*=\s*(\d+)", log_text)
         features["gpu_name"] = self._extract_str(r"GPU name:\s*(.+)", log_text)
-        self.gpu_name = features["gpu_name"]
 
         self.features = features
 
@@ -181,7 +181,7 @@ class MetaFeatureExtractor:
         record = {
             "timestamp": self._now_ts(),
             "model_name": self.model_name,
-            "gpu_name": self.gpu_name,
+            "hardware": self.hardware,
             "features": self.features,           # 原始提取
             "norm": self.norm,                   # 归一化特征
             "vector": self._to_list(self.vector) # 向量转 list 便于存盘
@@ -194,7 +194,7 @@ class MetaFeatureExtractor:
         """
         从 JSONL 文件读取历史记录，与 current_vector 逐条计算 Epanechnikov 相似度。
         返回按相似度从高到低排序的列表，每项包含：
-        {model_name, gpu_name, timestamp, similarity, vector_len}
+        {model_name, hardware, timestamp, similarity, vector_len}
         - top_k: 只返回前 k 个（None 表示全部）
         """
         if not os.path.exists(self.filepath):
@@ -216,7 +216,7 @@ class MetaFeatureExtractor:
                     sim = self._epanechnikov_similarity(curr, vec, h=h, p=p)
                     results.append({
                         "model_name": rec.get("model_name", ""),
-                        "gpu_name": rec.get("gpu_name", ""),
+                        "hardware": rec.get("hardware", ""),
                         "timestamp": rec.get("timestamp", 0),
                         "similarity": float(sim),
                         "vector_len": int(vec.size),
@@ -231,16 +231,26 @@ class MetaFeatureExtractor:
         return results
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
+    parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
+                        help='Processing device (cpu or gpu)')
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='m4',
+                       help='Processing hardware')
+    parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
+                        help='qwen3-8b, phimoe-mini')
+    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
+                        help='q4, q8')
+    args = parser.parse_args()
     param_types_instance ={'gpu-layers': 'integer'}
     config ={"gpu-layers": 32}
-    model_name = "phimoe-mini-q8"
+    model_name = f"{args.model}-{args.quant}"
 
-    extractor = MetaFeatureExtractor(model_name=model_name)
+    extractor = MetaFeatureExtractor(model_name=model_name, hardware = args.hardware)
     executor = LlamaExecutor(param_types=param_types_instance,
                               device="gpu")
 
-    print(config)
-    result = executor.extract_meta_feature(config, model_path=f"./../models/{model_name}.gguf")
+    # print(config)
+    result = executor.extract_meta_feature(config, model_path=f"./../models/{args.hardware}_{model_name}.gguf")
     vector = extractor.characterize_feature(result)
 
     results = extractor.load_and_compare(top_k=3)
