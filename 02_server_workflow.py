@@ -31,7 +31,7 @@ class TUNINGWorkflow:
         self.objectives = objectives
         self.max_observations = max_observations
         self.parallel_degree = parallel_degree
-        self.executor = LlamaExecutor(self.tuner.param_types, device=device)
+        self.executor = LlamaExecutor(self.tuner.param_types, device=device,hardware=hardware)
         self.hardware = hardware
         self.model_name = f"{model}-{quant}"
         self.model = f"./../models/{model}-{quant}.gguf"
@@ -43,7 +43,7 @@ class TUNINGWorkflow:
             'performance': []
         }
         self.iter_hv = []
-        self.bounds = self._load_metric_bounds(f"bounds/{self.hardware}_{self.model_name}.json")
+        self.bounds = self._load_metric_bounds(f"bounds/{self.hardware}/{self.model_name}.json")
         self.hv_calc = HypervolumeCalculator(self.bounds)
         
     def run_workflow(self):
@@ -82,7 +82,7 @@ class TUNINGWorkflow:
             self.iter_hv.append(hv)
 
             if self.current_observations >= self.max_observations:
-                self.tuner.save_surrogate(f"surrogate_models/{self.hardware}_{self.model_name}.pth")
+                self.tuner.save_surrogate(f"surrogate_models/{self.hardware}/{self.model_name}.pth")
                 # self._plot_hv_over_iterations()
                 break
 
@@ -152,6 +152,9 @@ class TUNINGWorkflow:
             self.tuner.update_pareto_front()  # 更新Pareto前沿
 
             self.tuner.set_reference_point()
+
+            hv = self._compute_hypervolume()
+            self.iter_hv.append(hv)
             print("==SURROGATE MODEL UPDATED==")
                 
         return perf_results
@@ -244,13 +247,13 @@ class TUNINGWorkflow:
             for config, perf in self.tuner.pareto_front
         ]
 
-        with open(f"pareto_fronts/latune-{model}.json", 'w', encoding='utf-8') as f:
+        with open(f"pareto_fronts/{self.hardware}/latune-{model}.json", 'w', encoding='utf-8') as f:
             json.dump(pareto_serializable, f, indent=2)
-        print(f"Pareto 前沿已保存到 pareto_fronts/latune-{model}.json")
+        print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardware}/latune-{model}.json")
 
-        with open(f"hv_progress/latune-{model}.json", "w") as f:
+        with open(f"hv_progress/{self.hardware}/latune-{model}.json", "w") as f:
             json.dump(self.iter_hv, f, indent=4)
-        print(f"save to hv_progress/latune-{model}.json")
+        print(f"save to hv_progress/{self.hardware}/latune-{model}.json")
 
     def load_pareto_front(self, filepath: str):
         """从文件中加载 Pareto 前沿"""
@@ -293,24 +296,19 @@ class TUNINGWorkflow:
         # 保存成PDF
         plt.savefig("tps_gpu_r3.pdf")
 
-    def _mock_run_server(self):
-        tps = random.randint(20, 80)           # TPS范围[20, 80]
-        resource = random.randint(300, 12000)  # Resource范围[300, 12000]
-        return {"tps": tps, "resource": resource}, 1
-
 # 使用示例
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                        help='Processing device (cpu or gpu)')
-    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='m4',
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='rtx3060',
                        help='Processing hardware')
     parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
                         help='qwen3-8b, phimoe-mini')
-    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
+    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q8',
                         help='q4, q8')
     args = parser.parse_args()
-    parameters_path = f"knobs_files/{args.hardware}_{args.model}-{args.quant}.json"
+    parameters_path = f"knobs_files/{args.hardware}/{args.model}-{args.quant}.json"
 
     if args.device == 'gpu':
         objectives = {'tps_avg': 'max', 'gpu_avg': 'min'}
@@ -321,7 +319,7 @@ if __name__ == "__main__":
     workflow = TUNINGWorkflow(
         parameters_path=parameters_path,
         objectives=objectives, 
-        max_observations=25,
+        max_observations=50,
         parallel_degree=5,
         device=args.device,
         hardware=args.hardware,

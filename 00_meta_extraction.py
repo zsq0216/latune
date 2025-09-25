@@ -58,7 +58,8 @@ class MetaFeatureExtractor:
         # --- 硬件 ---
         features["gpu_mem_GB"] = self._extract_float(r"(\d+) MiB free", log_text) / 1024
         features["cpu_threads"] = self._extract_int(r"n_threads\s*=\s*(\d+)", log_text)
-        features["gpu_name"] = self._extract_str(r"GPU name:\s*(.+)", log_text)
+        # features["gpu_name"] = self._extract_str(r"GPU name:\s*(.+)", log_text)
+        features["gpu_name"] = self.hardware
 
         self.features = features
 
@@ -88,22 +89,24 @@ class MetaFeatureExtractor:
         norm["gpu_mem_GB"] = features["gpu_mem_GB"] / 32       # 假设 32GB 上限
         norm["cpu_threads"] = features["cpu_threads"] / 32    # 假设 32 核
 
-        name = (features.get("gpu_name") or "").lower()
+        # name = (features.get("gpu_name") or "").lower()
 
-        # 厂商 one-hot
-        is_apple  = 1.0 if "apple"  in name else 0.0
-        is_nvidia = 1.0 if any(k in name for k in ["nvidia", "geforce", "rtx", "tesla", "quadro"]) else 0.0
-        is_amd    = 1.0 if any(k in name for k in ["amd", "radeon", "instinct"]) else 0.0
+        # # 厂商 one-hot
+        # is_apple  = 1.0 if "apple"  in name else 0.0
+        # is_nvidia = 1.0 if any(k in name for k in ["nvidia", "geforce", "rtx", "tesla", "quadro"]) else 0.0
+        # is_amd    = 1.0 if any(k in name for k in ["amd", "radeon", "instinct"]) else 0.0
 
-        base_affinity = 0.6  # unknown
-        if is_nvidia:
-            base_affinity = 0.9
-        elif is_amd:
-            base_affinity = 0.75
-        elif is_apple:
-            base_affinity = 0.7
+        # base_affinity = 0.6  # unknown
+        # if is_nvidia:
+        #     base_affinity = 0.9
+        # elif is_amd:
+        #     base_affinity = 0.75
+        # elif is_apple:
+        #     base_affinity = 0.7
 
-        norm["gpu_vendor"] = base_affinity
+        # norm["gpu_vendor"] = base_affinity
+        gpu_map = {"orin": 0.1, "m4": 0.2, "rtx3060": 0.3, "rtx4090": 0.6}
+        norm["gpu_vendor"] = gpu_map.get(features["gpu_name"], 0)    
         self.norm = norm
 
     def to_vector(self, norm_features: dict):
@@ -234,7 +237,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                         help='Processing device (cpu or gpu)')
-    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='m4',
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='rtx3060',
                        help='Processing hardware')
     parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
                         help='qwen3-8b, phimoe-mini')
@@ -250,7 +253,7 @@ if __name__ == "__main__":
                               device="gpu")
 
     # print(config)
-    result = executor.extract_meta_feature(config, model_path=f"./../models/{args.hardware}_{model_name}.gguf")
+    result = executor.extract_meta_feature(config, model_path=f"./../models/{model_name}.gguf")
     vector = extractor.characterize_feature(result)
 
     results = extractor.load_and_compare(top_k=3)

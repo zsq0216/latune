@@ -12,7 +12,7 @@ import os
 from collections import defaultdict
 
 class LlamaConfigOptimizer:
-    def __init__(self, params_path, device="cpu",model="./../models/qwen3-4b-q4.gguf", hardware="m4"):
+    def __init__(self, params_path, device="gpu",model="./../models/qwen3-4b-q4.gguf", hardware="m4"):
         self.params_path = params_path
         self.device = device
         self.model = model
@@ -21,7 +21,7 @@ class LlamaConfigOptimizer:
         self.y = None
         self.performance_params = self._load_params()
         self.param_types = {name: param["type"] for name, param in self.performance_params.items()}
-        self.executor = LlamaExecutor(self.param_types, model_path=model, device=device)
+        self.executor = LlamaExecutor(self.param_types, model_path=model, device=device,hardware=hardware)
 
         # 新增：在预处理时会填充
         self.param_feature_map = None   # {base_param: [feature_cols]}
@@ -32,7 +32,11 @@ class LlamaConfigOptimizer:
             return json.load(f)
 
     def evaluate_config(self, config):
-        return self.executor.run_server_performance_test(config)
+        results = self.executor.run_server_performance_test(config)
+        return {
+            "tps_avg": results.get("tps_avg", 0.0),
+            "gpu_avg": results.get("gpu_avg", 0.0)
+        }
 
     def generate_dataset(self, n_samples=50):
         configs = pd.DataFrame(self.executor.generate_configs(self.performance_params, n_samples))
@@ -116,12 +120,12 @@ class LlamaConfigOptimizer:
             # 保存图像
             plt.figure()
             shap.summary_plot(shap_values, processed_X, plot_type="bar", show=False)
-            plt.savefig(f"{output_dir}/shap_summary_bar_{target}.png", bbox_inches='tight', dpi=300)
+            plt.savefig(f"{output_dir}/{self.hardware}/bar_{target}.png", bbox_inches='tight', dpi=300)
             plt.close()
 
             plt.figure()
             shap.summary_plot(shap_values, processed_X, show=False)
-            plt.savefig(f"{output_dir}/shap_summary_{target}.png", bbox_inches='tight', dpi=300)
+            plt.savefig(f"{output_dir}/{self.hardware}/{target}.png", bbox_inches='tight', dpi=300)
             plt.close()
 
         return shap_values_dict
@@ -238,7 +242,7 @@ class LlamaConfigOptimizer:
             raise ValueError(f"self.y 中没有找到指标列（候选: {metric_candidates}）。")
 
         if output_path is None:
-            output_path = f"bounds/{self.hardware}_{model}.json"
+            output_path = f"bounds/{self.hardware}/{model}.json"
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:
@@ -251,11 +255,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                         help='Processing device (cpu or gpu)')
-    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='m4',
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='rtx3060',
                        help='Processing hardware')
     parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
                         help='qwen3-8b, phimoe-mini')
-    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
+    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q8',
                         help='q4, q8')
     args = parser.parse_args()
 
@@ -265,7 +269,7 @@ if __name__ == "__main__":
         params_path=f"knobs_files/knobs_raw.json",
         device=args.device,
         model = f"./../models/{model_name}.gguf",
-
+        hardware=args.hardware
     )
 
     # 生成数据集
@@ -275,8 +279,8 @@ if __name__ == "__main__":
     extrema_json_path = optimizer.save_metric_extrema_from_memory(model_name)
     print(f"Saved metric extrema JSON to: {extrema_json_path}")
 
-    X.to_csv(f"shap_outputs/{args.hardware}_X_{model_name}.csv", index=False)
-    y.to_csv(f"shap_outputs/{args.hardware}_y_{model_name}.csv", index=False)
+    X.to_csv(f"shap_outputs/{args.hardware}/X_{model_name}.csv", index=False)
+    y.to_csv(f"shap_outputs/{args.hardware}/y_{model_name}.csv", index=False)
 
     # 训练模型
     optimizer.train_model()
@@ -297,7 +301,7 @@ if __name__ == "__main__":
     print(weighted_param_scores)
 
     # ===== 新增：写 JSON（在原有基础上加 'rank'）=====
-    output_json = f"knobs_files/{args.hardware}_{model_name}.json"
+    output_json = f"knobs_files/{args.hardware}/{model_name}.json"
     path = optimizer.write_ranked_params_json(weighted_param_scores, output_json)
     print(f"\nWrote ranked params JSON to: {path}")
 

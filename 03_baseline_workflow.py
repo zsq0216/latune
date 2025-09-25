@@ -2,7 +2,7 @@ from hv_calculator import HypervolumeCalculator
 import json
 import argparse
 import matplotlib.pyplot as plt
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 import numpy as np
 from basetuner import DefaultTuner, RandomTuner, GeneticAlgorithmTuner, ConstrainedBayesTuner
 
@@ -22,25 +22,26 @@ class BaselineWorkflow:
         # 根据算法选择调优器
         self.method = algorithm
         if algorithm == "Default":
-            self.tuner = DefaultTuner(parameters_path, known_constraints, objectives, device=device)
+            self.tuner = DefaultTuner(parameters_path, known_constraints, objectives, device=device, hardware=hardware)
         elif algorithm == "RD":
-            self.tuner = RandomTuner(parameters_path, known_constraints, objectives, device=device)
+            self.tuner = RandomTuner(parameters_path, known_constraints, objectives, device=device, hardware=hardware)
         elif algorithm == "GA":
-            self.tuner = GeneticAlgorithmTuner(parameters_path, known_constraints, objectives, device=device)
+            self.tuner = GeneticAlgorithmTuner(parameters_path, known_constraints, objectives, device=device, hardware=hardware)
         elif algorithm == "CBO":
-            self.tuner = ConstrainedBayesTuner(parameters_path, known_constraints, objectives, device=device)
+            self.tuner = ConstrainedBayesTuner(parameters_path, known_constraints, objectives, device=device, hardware=hardware)
         else:
             raise ValueError(f"Unknown algorithm: {algorithm}")
         
         self.max_observations = max_observations
-        self.hardwre = hardware,
+        self.hardware = hardware
+        self.model_name = f"{model}-{quant}"
         self.model = f"./../models/{model}-{quant}.gguf"
         self.parallel_degree = parallel_degree
         self.current_observations = 0
         self.objectives = objectives
         self.history = {'configs': [], 'performance': []}
         self.iter_hv = []
-        self.bounds = {"tps_avg": (0,105), "gpu_avg": (2000,5000)}
+        self.bounds = self._load_metric_bounds(f"bounds/{self.hardware}/{self.model_name}.json")
         self.hv_calc = HypervolumeCalculator(self.bounds)
         self.pareto_front = []
 
@@ -74,6 +75,31 @@ class BaselineWorkflow:
             
         # self._plot_hv_over_iterations()
 
+    def _load_metric_bounds(self, path: str) -> Dict[str, Tuple[float, float]]:
+        """
+        从 JSON 文件读取 {"metric": {"min": x, "max": y}, ...}
+        返回 {"metric": (min, max)}，数值会转成 float。
+        无效/缺失的项会被跳过。
+        """
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        out: Dict[str, Tuple[float, float]] = {}
+        for metric, mm in data.items():
+            if not isinstance(mm, dict):
+                continue
+            lo = mm.get("min")
+            hi = mm.get("max")
+            if lo is None or hi is None:
+                continue
+            try:
+                lo = float(lo)
+                hi = float(hi)
+            except (TypeError, ValueError):
+                continue
+            out[metric] = (lo, hi)
+        return out
+    
     def _run_default_config(self):
         perform = self._evaluate_configs([{}])
         self.update_pareto_front()
@@ -257,25 +283,25 @@ class BaselineWorkflow:
             for config, perf in self.pareto_front
         ]
 
-        with open(f"pareto_fronts/{self.hardwre}/{method}-{model}.json", 'w', encoding='utf-8') as f:
+        with open(f"pareto_fronts/{self.hardware}/{method}-{model}.json", 'w', encoding='utf-8') as f:
             json.dump(pareto_serializable, f, indent=2)
-        print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardwre}/{method}-{model}.json")
+        print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardware}/{method}-{model}.json")
 
-        with open(f"hv_progress/{self.hardwre}/{method}-{model}.json", "w") as f:
+        with open(f"hv_progress/{self.hardware}/{method}-{model}.json", "w") as f:
             json.dump(self.iter_hv, f, indent=4)
-        print(f"save to hv_progress/{self.hardwre}/{method}-{model}.json")
+        print(f"save to hv_progress/{self.hardware}/{method}-{model}.json")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                        help='Processing device (cpu or gpu)')
-    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='m4',
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='rtx3060',
                        help='Processing hardware')
-    parser.add_argument('--method', type=str, choices=['Default', 'GA', 'SCOOT', 'CBO'], default='CBO',
+    parser.add_argument('--method', type=str, choices=['Default', 'GA', 'SCOOT', 'CBO'], default='GA',
                        help='Processing mothod (GA, SCOOT, CBO)')
     parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
                         help='qwen3-8b, phimoe-mini')
-    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
+    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q8',
                         help='q4, q8')
     args = parser.parse_args()
 
@@ -285,14 +311,14 @@ if __name__ == "__main__":
         objectives = {'tps_avg': 'max', 'mem_avg': 'min'}
 
     workflow = BaselineWorkflow(
-        parameters_path=f"knobs_files/{args.hardware}_{args.model}-{args.quant}.json",
+        parameters_path=f"knobs_files/{args.hardware}/{args.model}-{args.quant}.json",
         known_constraints=[],
         objectives=objectives,
         algorithm=args.method, 
-        max_observations=25,
+        max_observations=50,
         parallel_degree=5,
         device=args.device,
-        hardware=args.hardare,
+        hardware=args.hardware,
         model = args.model,
         quant = args.quant
     )

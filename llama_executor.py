@@ -16,6 +16,7 @@ class LlamaExecutor:
                  param_types: Dict[str, str],
                  model_path: Optional[str] = "./../models/qwen3-8b-q4.gguf",
                  device: str = "gpu",
+                 hardware: str = "rtx3060",
                  default_prompt: str = "I believe the meaning of life is",
                  ):
         """
@@ -27,6 +28,7 @@ class LlamaExecutor:
         self.default_prompt = default_prompt
         self.model_path = model_path
         self.device = device
+        self.hardware = hardware
         self.stop_event = None
         self.server_process = None
         self.prompt_list = [
@@ -200,43 +202,43 @@ class LlamaExecutor:
                 print(f"Request failed: {str(e)}")
         return tps_list, pps_list
     
-    def _send_requests_concurrently(
-        self, prompts: List[str], config: Dict, max_workers: int = 8
-        ) -> Tuple[List[float], List[float]]:
-        """
-        并发地发送多条请求；返回与 prompts 对齐的 tps_list / pps_list。
-        """
-        n = len(prompts)
-        tps_list: List[Optional[float]] = [None] * n
-        pps_list: List[Optional[float]] = [None] * n
+    # def _send_requests_concurrently(
+    #     self, prompts: List[str], config: Dict, max_workers: int = 8
+    #     ) -> Tuple[List[float], List[float]]:
+    #     """
+    #     并发地发送多条请求；返回与 prompts 对齐的 tps_list / pps_list。
+    #     """
+    #     n = len(prompts)
+    #     tps_list: List[Optional[float]] = [None] * n
+    #     pps_list: List[Optional[float]] = [None] * n
 
-        def _task(idx: int, prompt: str) -> Tuple[int, float, float]:
-            tps_batch, pps_batch = self._send_request_batch([prompt], config)
-            # batch 保证至少返回一条结果
-            return idx, tps_batch[0], pps_batch[0]
+    #     def _task(idx: int, prompt: str) -> Tuple[int, float, float]:
+    #         tps_batch, pps_batch = self._send_request_batch([prompt], config)
+    #         # batch 保证至少返回一条结果
+    #         return idx, tps_batch[0], pps_batch[0]
 
-        start_all = time.perf_counter()
-        # 根据场景选择合适的并发度；I/O 型任务 4~16 都常见
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            futures = [pool.submit(_task, i, p) for i, p in enumerate(prompts)]
-            for fut in as_completed(futures):
-                try:
-                    idx, tps, pps = fut.result()
-                    tps_list[idx] = tps
-                    pps_list[idx] = pps
-                except Exception as e:
-                    logging.exception("Request failed: %s", e)
-                    # 失败位置填默认值，避免后续汇总报错
-                    # 也可以选择重试，这里先给 0
-                    # 你也可以把 None 留给 _summarize_metrics 去过滤
-                    idx = futures.index(fut)
-                    tps_list[idx] = 0.0
-                    pps_list[idx] = 0.0
-        end_all = time.perf_counter()
-        print(f"All {n} requests completed in {end_all - start_all:.2f} seconds")
+    #     start_all = time.perf_counter()
+    #     # 根据场景选择合适的并发度；I/O 型任务 4~16 都常见
+    #     with ThreadPoolExecutor(max_workers=max_workers) as pool:
+    #         futures = [pool.submit(_task, i, p) for i, p in enumerate(prompts)]
+    #         for fut in as_completed(futures):
+    #             try:
+    #                 idx, tps, pps = fut.result()
+    #                 tps_list[idx] = tps
+    #                 pps_list[idx] = pps
+    #             except Exception as e:
+    #                 logging.exception("Request failed: %s", e)
+    #                 # 失败位置填默认值，避免后续汇总报错
+    #                 # 也可以选择重试，这里先给 0
+    #                 # 你也可以把 None 留给 _summarize_metrics 去过滤
+    #                 idx = futures.index(fut)
+    #                 tps_list[idx] = 0.0
+    #                 pps_list[idx] = 0.0
+    #     end_all = time.perf_counter()
+    #     print(f"All {n} requests completed in {end_all - start_all:.2f} seconds")
 
-        # 类型收紧（如果用了 None，记得在 summarize 里做过滤）
-        return [float(x or 0.0) for x in tps_list], [float(x or 0.0) for x in pps_list]
+    #     # 类型收紧（如果用了 None，记得在 summarize 里做过滤）
+    #     return [float(x or 0.0) for x in tps_list], [float(x or 0.0) for x in pps_list]
 
 
     def _summarize_metrics(self, resource_metrics, tps_list, pps_list):
@@ -257,7 +259,13 @@ class LlamaExecutor:
         model_path = model_path or self.model_path
         thread = None
         try:
-            thread, metrics = self._start_server_and_metrics_thread(config, model_path)
+            try:
+                thread, metrics = self._start_server_and_metrics_thread(config, model_path)
+            except (TimeoutError, ValueError) as e:
+                return {
+                    'tps_avg': 0,
+                    'gpu_avg': {"m4": 9000.0, "rtx3060": 11000.0, "rtx4090": 22000.0, "orin": 7000.0}[self.hardware]
+                }
             prompts = self.prompt_list[:num_requests]
             tps_list, pps_list = self._send_request_batch(prompts, config)
             time.sleep(0.5)
@@ -271,52 +279,24 @@ class LlamaExecutor:
 
         return self._summarize_metrics(metrics, tps_list, pps_list)
 
-    def run_server_performance_concurrently_test(self, config: Dict, num_requests: int = 10,
-                                    model_path: Optional[str] = None) -> Dict:
-        model_path = model_path or self.model_path
-        thread = None
-        try:
-            thread, metrics = self._start_server_and_metrics_thread(config, model_path)
-            prompts = self.prompt_list[:num_requests]
-            tps_list, pps_list = self._send_requests_concurrently(prompts, config)
-            time.sleep(0.5)
-        finally:
-            if self.stop_event:
-                self.stop_event.set()
-            if thread is not None:
-                thread.join()
-            if hasattr(self, 'server_process') and self.server_process is not None:
-                self.server_process.terminate()
-
-        return self._summarize_metrics(metrics, tps_list, pps_list)
-
-    # def run_server_performance_test_streaming(self, config: Dict,
-    #                                         model_path: Optional[str] = None):
-    #     thread, metrics = self._start_server_and_metrics_thread(config, model_path)
-
+    # def run_server_performance_concurrently_test(self, config: Dict, num_requests: int = 10,
+    #                                 model_path: Optional[str] = None) -> Dict:
+    #     model_path = model_path or self.model_path
+    #     thread = None
     #     try:
-    #         batch_tps, batch_pps = [], []
-    #         for i, prompt in enumerate(itertools.cycle(self.prompt_list[:3])):
-    #             try:
-    #                 tps, pps = self.send_request_to_server(
-    #                     prompt=prompt,
-    #                     port=config.get('port', 8080),
-    #                     max_tokens=128
-    #                 )
-    #                 batch_tps.append(tps)
-    #                 batch_pps.append(pps)
-    #             except Exception as e:
-    #                 print(f"Request failed: {str(e)}")
-
-    #             if (i + 1) % 3 == 0:
-    #                 yield self._summarize_metrics(metrics, batch_tps, batch_pps)
-    #                 batch_tps.clear()
-    #                 batch_pps.clear()
+    #         thread, metrics = self._start_server_and_metrics_thread(config, model_path)
+    #         prompts = self.prompt_list[:num_requests]
+    #         tps_list, pps_list = self._send_requests_concurrently(prompts, config)
+    #         time.sleep(0.5)
     #     finally:
-    #         self.stop_event.set()
-    #         thread.join()
-    #         self.server_process.terminate()
+    #         if self.stop_event:
+    #             self.stop_event.set()
+    #         if thread is not None:
+    #             thread.join()
+    #         if hasattr(self, 'server_process') and self.server_process is not None:
+    #             self.server_process.terminate()
 
+    #     return self._summarize_metrics(metrics, tps_list, pps_list)
     
     def _run_llama_server(self, config: Dict, model_path: Optional[str] = None) -> subprocess.Popen:
         """启动llama.cpp服务器进程"""
@@ -409,8 +389,8 @@ class LlamaExecutor:
             proc = psutil.Process(process.pid)
             proc.cpu_percent(interval=None)  
             time.sleep(0.1) 
-            if self.device == "gpu": # TODO:refractor device-related
-                gpu_mem = self._get_mac_gpu_memory_usage()# 需实现NVIDIA工具调用
+            if self.hardware == "m4": 
+                gpu_mem = self._get_mac_gpu_memory_usage()
             else:
                 gpu_mem = self._get_gpu_memory_usage(proc.pid)
             return {

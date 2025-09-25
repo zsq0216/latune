@@ -11,14 +11,14 @@ from scipy.stats import norm
 
 
 class BaseTuner(ABC):
-    def __init__(self, parameters_path: str, known_constraints: List[str], objectives: List[str], device: str):
+    def __init__(self, parameters_path: str, known_constraints: List[str], objectives: List[str], device: str, hardware: str):
         self.parameters = Knobs(parameters_path, 5, random= False).knobs
         self.objectives = objectives
         self.known_constraints = known_constraints
         self.param_types = {name: param["type"] for name, param in self.parameters.items()}
         self.device = device
         print(self.device)
-        self.executor = LlamaExecutor(self.param_types, device = self.device)
+        self.executor = LlamaExecutor(self.param_types, device = self.device, hardware=hardware)
 
     def _load_parameters(self, path: str) -> List[Dict]:
         # 加载参数定义（示例实现）
@@ -53,8 +53,8 @@ class RandomTuner(BaseTuner):
 
 class GeneticAlgorithmTuner(BaseTuner):
     def __init__(self, parameters_path: str, known_constraints: List[str], objectives: List[str], device: str,
-                 population_size: int = 5, mutation_rate: float = 0.1):
-        super().__init__(parameters_path, known_constraints, objectives, device)
+                 hardware:str, population_size: int = 5, mutation_rate: float = 0.1):
+        super().__init__(parameters_path, known_constraints, objectives, device, hardware)
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.population = self._initialize_population()
