@@ -20,7 +20,7 @@ class LlamaConfigOptimizer:
         self.y = None
         self.performance_params = self._load_params()
         self.param_types = {name: param["type"] for name, param in self.performance_params.items()}
-        self.executor = LlamaExecutor(self.param_types, device=device)
+        self.executor = LlamaExecutor(self.param_types, model_path=model, device=device)
 
         # 新增：在预处理时会填充
         self.param_feature_map = None   # {base_param: [feature_cols]}
@@ -252,7 +252,7 @@ if __name__ == "__main__":
                         help='Processing device (cpu or gpu)')
     args = parser.parse_args()
 
-    model_name = "phimoe-mini-q4.gguf"  # 模型名称
+    model_name = "phimoe-mini-q4"  # 模型名称
 
     optimizer = LlamaConfigOptimizer(
         params_path=f"knobs_files/knobs_raw.json",
