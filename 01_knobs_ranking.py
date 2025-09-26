@@ -12,10 +12,11 @@ import os
 from collections import defaultdict
 
 class LlamaConfigOptimizer:
-    def __init__(self, params_path, device="gpu",model="./../models/qwen3-4b-q4.gguf", hardware="m4"):
+    def __init__(self, params_path, device="gpu",model="./../models/qwen3-4b-q4.gguf", model_name="qwen3-4b-q4", hardware="m4"):
         self.params_path = params_path
         self.device = device
         self.model = model
+        self.model_name = model_name
         self.hardware = hardware
         self.X = None
         self.y = None
@@ -120,12 +121,12 @@ class LlamaConfigOptimizer:
             # 保存图像
             plt.figure()
             shap.summary_plot(shap_values, processed_X, plot_type="bar", show=False)
-            plt.savefig(f"{output_dir}/{self.hardware}/bar_{target}.png", bbox_inches='tight', dpi=300)
+            plt.savefig(f"{output_dir}/{self.hardware}/bar_{target}_{self.model_name}.png", bbox_inches='tight', dpi=300)
             plt.close()
 
             plt.figure()
             shap.summary_plot(shap_values, processed_X, show=False)
-            plt.savefig(f"{output_dir}/{self.hardware}/{target}.png", bbox_inches='tight', dpi=300)
+            plt.savefig(f"{output_dir}/{self.hardware}/{target}_{self.model_name}.png", bbox_inches='tight', dpi=300)
             plt.close()
 
         return shap_values_dict
@@ -269,6 +270,7 @@ if __name__ == "__main__":
         params_path=f"knobs_files/knobs_raw.json",
         device=args.device,
         model = f"./../models/{model_name}.gguf",
+        model_name = model_name,
         hardware=args.hardware
     )
 
