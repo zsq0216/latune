@@ -283,13 +283,13 @@ class BaselineWorkflow:
             for config, perf in self.pareto_front
         ]
 
-        with open(f"pareto_fronts/{self.hardware}/{method}-{model}.json", 'w', encoding='utf-8') as f:
+        with open(f"pareto_fronts/{self.hardware}/{model}-{method}.json", 'w', encoding='utf-8') as f:
             json.dump(pareto_serializable, f, indent=2)
-        print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardware}/{method}-{model}.json")
+        print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardware}/{model}-{method}.json")
 
-        with open(f"hv_progress/{self.hardware}/{method}-{model}.json", "w") as f:
+        with open(f"hv_progress/{self.hardware}/{model}-{method}.json", "w") as f:
             json.dump(self.iter_hv, f, indent=4)
-        print(f"save to hv_progress/{self.hardware}/{method}-{model}.json")
+        print(f"save to hv_progress/{self.hardware}/{model}-{method}.json")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')

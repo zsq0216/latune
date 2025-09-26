@@ -247,13 +247,13 @@ class TUNINGWorkflow:
             for config, perf in self.tuner.pareto_front
         ]
 
-        with open(f"pareto_fronts/{self.hardware}/latune-{model}.json", 'w', encoding='utf-8') as f:
+        with open(f"pareto_fronts/{self.hardware}/{model}-latune.json", 'w', encoding='utf-8') as f:
             json.dump(pareto_serializable, f, indent=2)
-        print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardware}/latune-{model}.json")
+        print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardware}/{model}-latune.json")
 
-        with open(f"hv_progress/{self.hardware}/latune-{model}.json", "w") as f:
+        with open(f"hv_progress/{self.hardware}/{model}-latune.json", "w") as f:
             json.dump(self.iter_hv, f, indent=4)
-        print(f"save to hv_progress/{self.hardware}/latune-{model}.json")
+        print(f"save to hv_progress/{self.hardware}/{model}-latune.json")
 
     def load_pareto_front(self, filepath: str):
         """从文件中加载 Pareto 前沿"""
