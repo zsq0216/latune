@@ -1,0 +1,176 @@
+{
+    "gpu-layers": {
+        "default": 0,
+        "type": "integer",
+        "values": {
+            "min": 0,
+            "max": 100
+        },
+        "rank": 1
+    },
+    "ubatch-size": {
+        "default": 512,
+        "type": "integer",
+        "values": {
+            "min": 32,
+            "max": 4096
+        },
+        "rank": 2
+    },
+    "ctx-size": {
+        "default": 4096,
+        "type": "integer",
+        "values": {
+            "min": 0,
+            "max": 8192
+        },
+        "rank": 3
+    },
+    "no-kv-offload": {
+        "default": false,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 4
+    },
+    "defrag-thold": {
+        "default": -1.0,
+        "type": "float",
+        "values": {
+            "min": -1.0,
+            "max": 1.0
+        },
+        "rank": 5
+    },
+    "batch-size": {
+        "default": 2048,
+        "type": "integer",
+        "values": {
+            "min": 64,
+            "max": 8192
+        },
+        "rank": 6
+    },
+    "split-mode": {
+        "default": "layer",
+        "type": "enum",
+        "values": [
+            "none",
+            "layer",
+            "row"
+        ],
+        "rank": 7
+    },
+    "threads-batch": {
+        "default": 6,
+        "type": "integer",
+        "values": {
+            "min": 1,
+            "max": 16
+        },
+        "rank": 8
+    },
+    "flash-attn": {
+        "default": false,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 9
+    },
+    "numa": {
+        "default": null,
+        "type": "enum",
+        "values": [
+            "distribute",
+            "isolate",
+            "numactl"
+        ],
+        "rank": 10
+    },
+    "parallel": {
+        "default": 1,
+        "type": "integer",
+        "values": {
+            "min": 1,
+            "max": 8
+        },
+        "rank": 11
+    },
+    "threads": {
+        "default": 6,
+        "type": "integer",
+        "values": {
+            "min": 1,
+            "max": 16
+        },
+        "rank": 12
+    },
+    "rope-scaling": {
+        "default": "linear",
+        "type": "enum",
+        "values": [
+            "none",
+            "linear",
+            "yarn"
+        ],
+        "rank": 13
+    },
+    "cont-batching": {
+        "default": true,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 14
+    },
+    "draft": {
+        "default": 5,
+        "type": "integer",
+        "values": {
+            "min": 1,
+            "max": 16
+        },
+        "rank": 15
+    },
+    "cpu-strict": {
+        "default": 0,
+        "type": "enum",
+        "values": [
+            0,
+            1
+        ],
+        "rank": 16
+    },
+    "no-mmap": {
+        "default": false,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 17
+    },
+    "mlock": {
+        "default": false,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 18
+    },
+    "no-cont-batching": {
+        "default": false,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 19
+    }
+}

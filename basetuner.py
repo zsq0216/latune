@@ -125,8 +125,8 @@ class GeneticAlgorithmTuner(BaseTuner):
         self.fitness = [self.fitness[i] for i in top_indices]
 
 class ConstrainedBayesTuner(BaseTuner):
-    def __init__(self, parameters_path, known_constraints, objectives, device, lambda_tps=97, lambda_pps=300):
-        super().__init__(parameters_path, known_constraints, objectives, device)
+    def __init__(self, parameters_path, known_constraints, objectives, device, hardware, lambda_tps=97, lambda_pps=300):
+        super().__init__(parameters_path, known_constraints, objectives, device, hardware)
         self.X = []
         self.y_res = []
         self.y_tps = []
