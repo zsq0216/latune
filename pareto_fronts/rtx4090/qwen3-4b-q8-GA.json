@@ -1,54 +1,67 @@
 [
   {
     "config": {
-      "ctx-size": 7034,
-      "gpu-layers": 8,
-      "no-kv-offload": true,
-      "threads-batch": 4,
-      "ubatch-size": 414
-    },
-    "perf": {
-      "tps_avg": 7.67638054054867,
-      "gpu_avg": 1886.578947368421
-    }
-  },
-  {
-    "config": {
-      "ctx-size": 6440,
-      "gpu-layers": 51,
-      "no-kv-offload": false,
-      "threads-batch": 14,
+      "batch-size": 6453,
+      "ctx-size": 4204,
+      "gpu-layers": 12,
+      "threads": 14,
       "ubatch-size": 1862
     },
     "perf": {
-      "tps_avg": 127.59750016311853,
-      "gpu_avg": 7054.666666666667
+      "tps_avg": 8.091954651722371,
+      "gpu_avg": 3359.542857142857
     }
   },
   {
     "config": {
-      "gpu-layers": 51,
-      "threads-batch": 14,
-      "ubatch-size": 1862,
-      "no-kv-offload": false,
-      "ctx-size": 3382
+      "batch-size": 4131,
+      "ctx-size": 3037,
+      "gpu-layers": 18,
+      "threads": 15,
+      "ubatch-size": 3209
     },
     "perf": {
-      "tps_avg": 127.21054556503536,
-      "gpu_avg": 6108.666666666667
+      "tps_avg": 10.06821544721439,
+      "gpu_avg": 4681.285714285715
     }
   },
   {
     "config": {
-      "gpu-layers": 37,
-      "threads-batch": 15,
-      "ubatch-size": 215,
-      "no-kv-offload": false,
-      "ctx-size": 131
+      "ctx-size": 704,
+      "ubatch-size": 414,
+      "threads": 4,
+      "gpu-layers": 3,
+      "batch-size": 4343
     },
     "perf": {
-      "tps_avg": 126.77853055832014,
-      "gpu_avg": 4634.666666666667
+      "tps_avg": 6.00932343725642,
+      "gpu_avg": 1399.0
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 704,
+      "ubatch-size": 414,
+      "threads": 4,
+      "gpu-layers": 92,
+      "batch-size": 4343
+    },
+    "perf": {
+      "tps_avg": 132.4087678756902,
+      "gpu_avg": 4876.666666666667
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 1396,
+      "ubatch-size": 2948,
+      "threads": 15,
+      "gpu-layers": 92,
+      "batch-size": 4343
+    },
+    "perf": {
+      "tps_avg": 132.71917431756762,
+      "gpu_avg": 5554.666666666667
     }
   }
 ]

@@ -1,223 +1,132 @@
 [
   {
     "config": {
+      "ctx-size": 6144,
+      "ubatch-size": 1048,
+      "threads": 12,
       "gpu-layers": 25,
-      "draft": 12,
-      "defrag-thold": -0.5,
-      "parallel": 6,
-      "ctx-size": 2048
+      "batch-size": 6160
     },
     "perf": {
-      "tps_avg": 33.399306136799304,
-      "gpu_avg": 6712.4
+      "tps_avg": 31.155660377625413,
+      "gpu_avg": 7801.4
     }
   },
   {
     "config": {
-      "gpu-layers": 4,
-      "draft": 5,
-      "defrag-thold": -0.6815861804627676,
-      "parallel": 8,
-      "ctx-size": 3650
+      "ctx-size": 2505,
+      "ubatch-size": 2518,
+      "threads": 11,
+      "gpu-layers": 1,
+      "batch-size": 599
     },
     "perf": {
-      "tps_avg": 11.806736255677938,
-      "gpu_avg": 1710.16
+      "tps_avg": 10.380286548610316,
+      "gpu_avg": 926.0
     }
   },
   {
     "config": {
-      "gpu-layers": 28,
-      "draft": 4,
-      "defrag-thold": 0.27263937128178206,
-      "parallel": 6,
-      "ctx-size": 5814
+      "ctx-size": 2103,
+      "ubatch-size": 3204,
+      "threads": 13,
+      "gpu-layers": 7,
+      "batch-size": 5970
     },
     "perf": {
-      "tps_avg": 43.72905257524596,
-      "gpu_avg": 8075.0
+      "tps_avg": 12.41435971984661,
+      "gpu_avg": 2886.0833333333335
     }
   },
   {
     "config": {
-      "gpu-layers": 35,
-      "draft": 3,
-      "defrag-thold": 0.9696228108009957,
-      "parallel": 4,
-      "ctx-size": 354
+      "ctx-size": 3029,
+      "ubatch-size": 1058,
+      "threads": 11,
+      "gpu-layers": 23,
+      "batch-size": 2948
     },
     "perf": {
-      "tps_avg": 162.5001167685008,
-      "gpu_avg": 8194.0
+      "tps_avg": 30.197473908704435,
+      "gpu_avg": 6601.818181818182
     }
   },
   {
     "config": {
-      "gpu-layers": 16,
-      "draft": 6,
-      "defrag-thold": -0.3526777939663941,
-      "parallel": 1,
-      "ctx-size": 3481
+      "ctx-size": 3189,
+      "ubatch-size": 2000,
+      "threads": 11,
+      "gpu-layers": 19,
+      "batch-size": 7613
     },
     "perf": {
-      "tps_avg": 18.664661233304145,
-      "gpu_avg": 4671.875
+      "tps_avg": 22.905263876565897,
+      "gpu_avg": 6114.0
     }
   },
   {
     "config": {
-      "gpu-layers": 54,
-      "draft": 11,
-      "defrag-thold": -0.7125594389440082,
-      "parallel": 4,
-      "ctx-size": 113
+      "ctx-size": 256,
+      "ubatch-size": 3693,
+      "threads": 5,
+      "gpu-layers": 33,
+      "batch-size": 4205
     },
     "perf": {
-      "tps_avg": 153.21542110312453,
-      "gpu_avg": 8114.0
+      "tps_avg": 170.83256350911236,
+      "gpu_avg": 8156.0
     }
   },
   {
     "config": {
-      "gpu-layers": 74,
-      "draft": 4,
-      "defrag-thold": -0.4713981044630029,
-      "parallel": 2,
-      "ctx-size": 1687
+      "ctx-size": 3026,
+      "ubatch-size": 4059,
+      "threads": 10,
+      "gpu-layers": 23,
+      "batch-size": 5164
     },
     "perf": {
-      "tps_avg": 163.91507826293073,
-      "gpu_avg": 8438.0
+      "tps_avg": 30.408439915292863,
+      "gpu_avg": 7527.818181818182
     }
   },
   {
     "config": {
-      "gpu-layers": 0,
-      "draft": 15,
-      "defrag-thold": -0.6900024079817826,
-      "parallel": 6,
-      "ctx-size": 5425
-    },
-    "perf": {
-      "tps_avg": 10.821422354174251,
-      "gpu_avg": 804.3571428571429
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 10,
-      "draft": 6,
-      "defrag-thold": -0.8817920156177563,
-      "parallel": 8,
-      "ctx-size": 5059
-    },
-    "perf": {
-      "tps_avg": 14.914342333163702,
-      "gpu_avg": 3361.9
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 13,
-      "draft": 15,
-      "defrag-thold": -0.16465207207065258,
-      "parallel": 2,
-      "ctx-size": 7597
-    },
-    "perf": {
-      "tps_avg": 16.510351943715907,
-      "gpu_avg": 4428.210526315789
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 50,
-      "draft": 9,
-      "defrag-thold": 0.15314185560859972,
-      "parallel": 2,
-      "ctx-size": 3375
-    },
-    "perf": {
-      "tps_avg": 164.6768606560727,
-      "gpu_avg": 8760.0
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 11,
-      "draft": 3,
-      "defrag-thold": 0.6210930257404106,
-      "parallel": 7,
-      "ctx-size": 7852
-    },
-    "perf": {
-      "tps_avg": 15.408251963552322,
-      "gpu_avg": 3928.2
-    }
-  },
-  {
-    "config": {
+      "ctx-size": 499,
+      "ubatch-size": 675,
+      "threads": 8,
       "gpu-layers": 12,
-      "draft": 12,
-      "defrag-thold": -0.873859337824415,
-      "parallel": 4,
-      "ctx-size": 6683
+      "batch-size": 7210
     },
     "perf": {
-      "tps_avg": 15.629204110122606,
-      "gpu_avg": 4054.0
+      "tps_avg": 17.089724120386737,
+      "gpu_avg": 3500.1111111111113
     }
   },
   {
     "config": {
-      "gpu-layers": 8,
-      "draft": 1,
-      "defrag-thold": 0.6510505345418092,
-      "parallel": 3,
-      "ctx-size": 7944
+      "ctx-size": 5529,
+      "ubatch-size": 2158,
+      "threads": 4,
+      "gpu-layers": 0,
+      "batch-size": 6733
     },
     "perf": {
-      "tps_avg": 13.942560681190821,
-      "gpu_avg": 3142.2727272727275
+      "tps_avg": 10.541576741527559,
+      "gpu_avg": 2064.866666666667
     }
   },
   {
     "config": {
-      "gpu-layers": 59,
-      "draft": 10,
-      "defrag-thold": 0.25833846760918444,
-      "parallel": 7,
-      "ctx-size": 86
+      "ctx-size": 216,
+      "ubatch-size": 1775,
+      "threads": 12,
+      "gpu-layers": 10,
+      "batch-size": 940
     },
     "perf": {
-      "tps_avg": 138.43158084258275,
-      "gpu_avg": 8108.0
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 8,
-      "draft": 10,
-      "defrag-thold": 0.4863143560195906,
-      "parallel": 2,
-      "ctx-size": 5665
-    },
-    "perf": {
-      "tps_avg": 13.759486474589659,
-      "gpu_avg": 2914.0
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 6,
-      "draft": 7,
-      "defrag-thold": 0.7317802991620912,
-      "parallel": 4,
-      "ctx-size": 158
-    },
-    "perf": {
-      "tps_avg": 13.138638433077658,
-      "gpu_avg": 2010.7826086956522
+      "tps_avg": 15.434384215551907,
+      "gpu_avg": 2968.2
     }
   }
 ]
