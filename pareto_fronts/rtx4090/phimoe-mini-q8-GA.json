@@ -1,0 +1,80 @@
+[
+  {
+    "config": {
+      "ctx-size": 6880,
+      "defrag-thold": -0.25840395153483753,
+      "draft": 8,
+      "gpu-layers": 18,
+      "parallel": 8
+    },
+    "perf": {
+      "tps_avg": 21.18887634956727,
+      "gpu_avg": 5644.0
+    }
+  },
+  {
+    "config": {
+      "gpu-layers": 51,
+      "draft": 3,
+      "defrag-thold": 0.64552322654166,
+      "parallel": 4,
+      "ctx-size": 21
+    },
+    "perf": {
+      "tps_avg": 110.18344493355012,
+      "gpu_avg": 8090.0
+    }
+  },
+  {
+    "config": {
+      "gpu-layers": 14,
+      "draft": 12,
+      "defrag-thold": -0.8116453042247009,
+      "parallel": 2,
+      "ctx-size": 704
+    },
+    "perf": {
+      "tps_avg": 17.44939758237379,
+      "gpu_avg": 3995.764705882353
+    }
+  },
+  {
+    "config": {
+      "gpu-layers": 40,
+      "draft": 12,
+      "defrag-thold": -0.5812460846775018,
+      "parallel": 2,
+      "ctx-size": 704
+    },
+    "perf": {
+      "tps_avg": 165.72613295262678,
+      "gpu_avg": 8262.0
+    }
+  },
+  {
+    "config": {
+      "gpu-layers": 0,
+      "draft": 12,
+      "defrag-thold": -0.5812460846775018,
+      "parallel": 2,
+      "ctx-size": 704
+    },
+    "perf": {
+      "tps_avg": 10.854870279301709,
+      "gpu_avg": 612.3571428571429
+    }
+  },
+  {
+    "config": {
+      "gpu-layers": 24,
+      "draft": 12,
+      "defrag-thold": -0.5812460846775018,
+      "parallel": 2,
+      "ctx-size": 704
+    },
+    "perf": {
+      "tps_avg": 30.97424369424891,
+      "gpu_avg": 6359.4
+    }
+  }
+]
