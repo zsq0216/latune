@@ -392,28 +392,47 @@ class LlamaExecutor:
         except Exception:
             return 0
 
-    def _get_orin_ram_used_mb(self) -> int:
+    # def _get_orin_ram_used_mb(self) -> int:
+    #     """
+    #     使用 tegrastats 获取当前系统 RAM 已用量（MB）。
+    #     返回：整数 MB
+    #     """
+    #     try:
+    #         # 启动 tegrastats，只取一行
+    #         proc = subprocess.Popen(
+    #             ["tegrastats", "--interval", "100"],
+    #             stdout=subprocess.PIPE,
+    #             stderr=subprocess.DEVNULL,
+    #             universal_newlines=True
+    #         )
+    #         line = proc.stdout.readline()
+    #         proc.terminate()
+
+    #         # 解析 "RAM 3958/15849MB ..." -> used=3958
+    #         m = re.search(r"RAM\s+(\d+)\s*/\s*(\d+)MB", line)
+    #         if m:
+    #             return int(m.group(1))  # 已用 MB
+    #     except Exception:
+    #         pass
+    #     return 0
+    
+    def _get_orin_ram_used_mb(self, pid: int) -> int:
         """
-        使用 tegrastats 获取当前系统 RAM 已用量（MB）。
-        返回：整数 MB
+        返回指定进程的 VmRSS (MB)。
+        VmRSS = 进程实际占用的物理内存（驻留集大小）。
         """
         try:
-            # 启动 tegrastats，只取一行
-            proc = subprocess.Popen(
-                ["tegrastats", "--interval", "100"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                universal_newlines=True
-            )
-            line = proc.stdout.readline()
-            proc.terminate()
-
-            # 解析 "RAM 3958/15849MB ..." -> used=3958
-            m = re.search(r"RAM\s+(\d+)\s*/\s*(\d+)MB", line)
-            if m:
-                return int(m.group(1))  # 已用 MB
-        except Exception:
-            pass
+            with open(f"/proc/{pid}/status", "r") as f:
+                for line in f:
+                    if line.startswith("VmRSS:"):
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            # VmRSS 默认单位是 kB
+                            return int(parts[1]) // 1024
+        except FileNotFoundError:
+            raise ValueError(f"进程 {pid} 不存在")
+        except Exception as e:
+            raise RuntimeError(f"读取 VmRSS 出错: {e}")
         return 0
 
     def _wait_for_server_ready(self, port: int, timeout: int = 30):
