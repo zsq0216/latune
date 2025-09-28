@@ -4,7 +4,7 @@
         "type": "integer",
         "values": {
             "min": 0,
-            "max": 100
+            "max": 40
         },
         "rank": 1
     },
@@ -13,7 +13,7 @@
         "type": "integer",
         "values": {
             "min": 0,
-            "max": 8192
+            "max": 1024
         },
         "rank": 2
     },
@@ -26,12 +26,12 @@
         ],
         "rank": 3
     },
-    "parallel": {
-        "default": 1,
+    "ubatch-size": {
+        "default": 512,
         "type": "integer",
         "values": {
-            "min": 1,
-            "max": 8
+            "min": 32,
+            "max": 4096
         },
         "rank": 4
     },
@@ -40,16 +40,16 @@
         "type": "integer",
         "values": {
             "min": 1,
-            "max": 16
+            "max": 6
         },
         "rank": 5
     },
-    "ubatch-size": {
-        "default": 512,
+    "parallel": {
+        "default": 1,
         "type": "integer",
         "values": {
-            "min": 32,
-            "max": 4096
+            "min": 1,
+            "max": 8
         },
         "rank": 6
     },
