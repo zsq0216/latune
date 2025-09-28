@@ -275,7 +275,7 @@ if __name__ == "__main__":
     )
 
     # 生成数据集
-    X, y = optimizer.generate_dataset(n_samples=100)
+    X, y = optimizer.generate_dataset(n_samples=50)
     os.makedirs("shap_outputs", exist_ok=True)
 
     extrema_json_path = optimizer.save_metric_extrema_from_memory(model_name)
