@@ -13,6 +13,7 @@ from scipy.stats import norm
 class BaseTuner(ABC):
     def __init__(self, parameters_path: str, known_constraints: List[str], objectives: List[str], device: str, hardware: str):
         self.parameters = Knobs(parameters_path, 5, random= False).knobs
+        self.param_names = list(self.parameters.keys())
         self.objectives = objectives
         self.known_constraints = known_constraints
         self.param_types = {name: param["type"] for name, param in self.parameters.items()}
@@ -143,8 +144,9 @@ class ConstrainedBayesTuner(BaseTuner):
             return self.executor.generate_configs(self.parameters ,n_samples=k)
 
         candidates = self.executor.generate_configs(self.parameters, n_samples=100)
-        X_candidates = np.array([list(config.values()) for config in candidates])
-        cei_scores = self._compute_cei(X_candidates)
+        # X_candidates = np.array([list(config.values()) for config in candidates])
+        x = [self._encode_config(c) for c in candidates]
+        cei_scores = self._compute_cei(x)
 
         top_indices = np.argsort(cei_scores)[-k:][::-1]
         selected_configs = [candidates[i] for i in top_indices]
@@ -154,19 +156,17 @@ class ConstrainedBayesTuner(BaseTuner):
         for config, perf in zip(configs, performances):
             if perf is None:
                 continue
-            self.X.append(list(config.values()))
+            # self.X.append(list(config.values()))
+            self.X.append(self._encode_config(config))
             self.y_res.append(perf[self.resource_metric])  # 或其他资源指标
             self.y_tps.append(perf['tps_avg'])
-            # self.y_pps.append(perf['pps_avg'])
 
         self.gp_res.fit(self.X, self.y_res)
         self.gp_tps.fit(self.X, self.y_tps)
-        # self.gp_pps.fit(self.X, self.y_pps)
 
     def _compute_cei(self, X: np.ndarray) -> np.ndarray:
         mu_res, sigma_res = self.gp_res.predict(X, return_std=True)
         mu_tps, sigma_tps = self.gp_tps.predict(X, return_std=True)
-        # mu_pps, sigma_pps = self.gp_pps.predict(X, return_std=True)
 
         feasible_mask = (np.array(self.y_tps) >= self.lambda_tps)# & (np.array(self.y_pps) <= self.lambda_pps)
         f_best = np.min(np.array(self.y_res)[feasible_mask]) if any(feasible_mask) else np.min(self.y_res)
@@ -181,6 +181,28 @@ class ConstrainedBayesTuner(BaseTuner):
 
         cei = ei * p_tps #* p_pps
         return cei
+    
+    def _encode_config(self, config):
+        """将配置编码为数值向量（用于模型输入）"""
+        encoded = []
+        for name in self.param_names:
+            val = config[name]
+            param_info = self.parameters[name]
+            if self.param_types[name] == 'integer':
+                # 归一化到[0,1]
+                min_val = param_info['values']['min']
+                max_val = param_info['values']['max']
+                encoded.append((val - min_val) / (max_val - min_val))
+            elif self.param_types[name] == 'float':
+                min_val = param_info['values']['min']
+                max_val = param_info['values']['max']
+                encoded.append((val - min_val) / (max_val - min_val))
+            elif self.param_types[name] == 'enum':
+                options = param_info['values']
+                encoded.append(options.index(val) / (len(options)-1))
+            elif self.param_types[name] == 'boolean':
+                encoded.append(1.0 if val else 0.0)
+        return np.array(encoded)
 
 
 

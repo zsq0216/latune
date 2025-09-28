@@ -311,7 +311,7 @@ if __name__ == "__main__":
         objectives = {'tps_avg': 'max', 'mem_avg': 'min'}
 
     workflow = BaselineWorkflow(
-        parameters_path=f"knobs_files/{args.hardware}/{args.model}-{args.quant}.json",
+        parameters_path=f"knobs_files/knobs_raw.json",
         known_constraints=[],
         objectives=objectives,
         algorithm=args.method, 
