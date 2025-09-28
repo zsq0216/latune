@@ -201,45 +201,6 @@ class LlamaExecutor:
             except Exception as e:
                 print(f"Request failed: {str(e)}")
         return tps_list, pps_list
-    
-    # def _send_requests_concurrently(
-    #     self, prompts: List[str], config: Dict, max_workers: int = 8
-    #     ) -> Tuple[List[float], List[float]]:
-    #     """
-    #     并发地发送多条请求；返回与 prompts 对齐的 tps_list / pps_list。
-    #     """
-    #     n = len(prompts)
-    #     tps_list: List[Optional[float]] = [None] * n
-    #     pps_list: List[Optional[float]] = [None] * n
-
-    #     def _task(idx: int, prompt: str) -> Tuple[int, float, float]:
-    #         tps_batch, pps_batch = self._send_request_batch([prompt], config)
-    #         # batch 保证至少返回一条结果
-    #         return idx, tps_batch[0], pps_batch[0]
-
-    #     start_all = time.perf_counter()
-    #     # 根据场景选择合适的并发度；I/O 型任务 4~16 都常见
-    #     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-    #         futures = [pool.submit(_task, i, p) for i, p in enumerate(prompts)]
-    #         for fut in as_completed(futures):
-    #             try:
-    #                 idx, tps, pps = fut.result()
-    #                 tps_list[idx] = tps
-    #                 pps_list[idx] = pps
-    #             except Exception as e:
-    #                 logging.exception("Request failed: %s", e)
-    #                 # 失败位置填默认值，避免后续汇总报错
-    #                 # 也可以选择重试，这里先给 0
-    #                 # 你也可以把 None 留给 _summarize_metrics 去过滤
-    #                 idx = futures.index(fut)
-    #                 tps_list[idx] = 0.0
-    #                 pps_list[idx] = 0.0
-    #     end_all = time.perf_counter()
-    #     print(f"All {n} requests completed in {end_all - start_all:.2f} seconds")
-
-    #     # 类型收紧（如果用了 None，记得在 summarize 里做过滤）
-    #     return [float(x or 0.0) for x in tps_list], [float(x or 0.0) for x in pps_list]
-
 
     def _summarize_metrics(self, resource_metrics, tps_list, pps_list):
         cpu = [m.get('cpu_percent', 0) for m in resource_metrics]
@@ -264,7 +225,7 @@ class LlamaExecutor:
             except (TimeoutError, ValueError) as e:
                 return {
                     'tps_avg': 0,
-                    'gpu_avg': {"m4": 9000.0, "rtx3060": 11000.0, "rtx4090": 22000.0, "orin": 7000.0}[self.hardware]
+                    'gpu_avg': {"m4": 9000.0, "rtx3060": 11000.0, "rtx4090": 22000.0, "orin": 5000.0}[self.hardware]
                 }
             prompts = self.prompt_list[:num_requests]
             tps_list, pps_list = self._send_request_batch(prompts, config)
@@ -278,25 +239,6 @@ class LlamaExecutor:
                 self.server_process.terminate()
 
         return self._summarize_metrics(metrics, tps_list, pps_list)
-
-    # def run_server_performance_concurrently_test(self, config: Dict, num_requests: int = 10,
-    #                                 model_path: Optional[str] = None) -> Dict:
-    #     model_path = model_path or self.model_path
-    #     thread = None
-    #     try:
-    #         thread, metrics = self._start_server_and_metrics_thread(config, model_path)
-    #         prompts = self.prompt_list[:num_requests]
-    #         tps_list, pps_list = self._send_requests_concurrently(prompts, config)
-    #         time.sleep(0.5)
-    #     finally:
-    #         if self.stop_event:
-    #             self.stop_event.set()
-    #         if thread is not None:
-    #             thread.join()
-    #         if hasattr(self, 'server_process') and self.server_process is not None:
-    #             self.server_process.terminate()
-
-    #     return self._summarize_metrics(metrics, tps_list, pps_list)
     
     def _run_llama_server(self, config: Dict, model_path: Optional[str] = None) -> subprocess.Popen:
         """启动llama.cpp服务器进程"""
@@ -391,6 +333,8 @@ class LlamaExecutor:
             time.sleep(0.1) 
             if self.hardware == "m4": 
                 gpu_mem = self._get_mac_gpu_memory_usage()
+            elif self.hardware == "orin":
+                gpu_mem = self._get_orin_ram_used_mb()-3000
             else:
                 gpu_mem = self._get_gpu_memory_usage(proc.pid)
             return {
@@ -447,6 +391,30 @@ class LlamaExecutor:
             return 0
         except Exception:
             return 0
+
+    def _get_orin_ram_used_mb(self) -> int:
+        """
+        使用 tegrastats 获取当前系统 RAM 已用量（MB）。
+        返回：整数 MB
+        """
+        try:
+            # 启动 tegrastats，只取一行
+            proc = subprocess.Popen(
+                ["tegrastats", "--interval", "100"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                universal_newlines=True
+            )
+            line = proc.stdout.readline()
+            proc.terminate()
+
+            # 解析 "RAM 3958/15849MB ..." -> used=3958
+            m = re.search(r"RAM\s+(\d+)\s*/\s*(\d+)MB", line)
+            if m:
+                return int(m.group(1))  # 已用 MB
+        except Exception:
+            pass
+        return 0
 
     def _wait_for_server_ready(self, port: int, timeout: int = 30):
         """检测服务器就绪状态"""
