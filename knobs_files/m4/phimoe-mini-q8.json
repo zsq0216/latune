@@ -13,7 +13,7 @@
         "type": "integer",
         "values": {
             "min": 0,
-            "max": 8192
+            "max": 2048
         },
         "rank": 2
     },
@@ -40,7 +40,7 @@
         "type": "integer",
         "values": {
             "min": 0,
-            "max": 100
+            "max": 40
         },
         "rank": 5
     },

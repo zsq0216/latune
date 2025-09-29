@@ -1,80 +1,54 @@
 [
   {
     "config": {
-      "ctx-size": 7034,
-      "gpu-layers": 8,
-      "no-kv-offload": true,
-      "rope-scaling": "none",
+      "batch-size": 7043,
+      "ctx-size": 704,
+      "gpu-layers": 70,
+      "threads": 4,
       "ubatch-size": 414
     },
     "perf": {
-      "tps_avg": 23.66209976928481,
-      "gpu_avg": 525.6428571428571
+      "tps_avg": 37.18388090366799,
+      "gpu_avg": 991.4444444444445
     }
   },
   {
     "config": {
-      "gpu-layers": 8,
-      "no-kv-offload": false,
-      "rope-scaling": "yarn",
-      "ctx-size": 4041,
+      "batch-size": 6453,
+      "ctx-size": 4204,
+      "gpu-layers": 12,
+      "threads": 14,
       "ubatch-size": 1862
     },
     "perf": {
-      "tps_avg": 28.627524265404034,
-      "gpu_avg": 773.25
+      "tps_avg": 1.0,
+      "gpu_avg": 805.952
     }
   },
   {
     "config": {
-      "gpu-layers": 37,
-      "no-kv-offload": false,
-      "rope-scaling": "yarn",
-      "ctx-size": 4041,
+      "batch-size": 4131,
+      "ctx-size": 3037,
+      "gpu-layers": 18,
+      "threads": 15,
       "ubatch-size": 3209
     },
     "perf": {
-      "tps_avg": 37.91353725308386,
-      "gpu_avg": 1379.2222222222222
+      "tps_avg": 0,
+      "gpu_avg": 801.0
     }
   },
   {
     "config": {
-      "gpu-layers": 27,
-      "no-kv-offload": false,
-      "rope-scaling": "yarn",
-      "ctx-size": 4041,
-      "ubatch-size": 4079
+      "ctx-size": 704,
+      "ubatch-size": 414,
+      "threads": 13,
+      "gpu-layers": 70,
+      "batch-size": 7043
     },
     "perf": {
-      "tps_avg": 32.84429021062557,
-      "gpu_avg": 1134.2
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 37,
-      "no-kv-offload": false,
-      "rope-scaling": "yarn",
-      "ctx-size": 4041,
-      "ubatch-size": 3209
-    },
-    "perf": {
-      "tps_avg": 37.91679821827568,
-      "gpu_avg": 1383.0
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 37,
-      "no-kv-offload": false,
-      "rope-scaling": "yarn",
-      "ctx-size": 4041,
-      "ubatch-size": 61
-    },
-    "perf": {
-      "tps_avg": 37.91882518872433,
-      "gpu_avg": 1530.111111111111
+      "tps_avg": 37.06210100954558,
+      "gpu_avg": 990.6666666666666
     }
   }
 ]
