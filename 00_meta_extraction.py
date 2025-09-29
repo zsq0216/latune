@@ -237,9 +237,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                         help='Processing device (cpu or gpu)')
-    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='rtx3060',
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='orin',
                        help='Processing hardware')
-    parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
+    parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='qwen3-4b',
                         help='qwen3-8b, phimoe-mini')
     parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
                         help='q4, q8')

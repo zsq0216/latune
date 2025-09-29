@@ -1,0 +1,119 @@
+[
+  {
+    "config": {
+      "ctx-size": 3072,
+      "ubatch-size": 1556,
+      "threads": 10,
+      "gpu-layers": 12,
+      "batch-size": 7176
+    },
+    "perf": {
+      "tps_avg": 34.51043795848782,
+      "gpu_avg": 2522.6
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 4906,
+      "ubatch-size": 109,
+      "threads": 12,
+      "gpu-layers": 8,
+      "batch-size": 873
+    },
+    "perf": {
+      "tps_avg": 29.328720970199218,
+      "gpu_avg": 1423.8181818181818
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 1879,
+      "ubatch-size": 3361,
+      "threads": 14,
+      "gpu-layers": 18,
+      "batch-size": 2583
+    },
+    "perf": {
+      "tps_avg": 35.963431487084144,
+      "gpu_avg": 3130.285714285714
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 207,
+      "ubatch-size": 3964,
+      "threads": 4,
+      "gpu-layers": 67,
+      "batch-size": 5024
+    },
+    "perf": {
+      "tps_avg": 127.43851857592922,
+      "gpu_avg": 4378.666666666667
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 490,
+      "ubatch-size": 958,
+      "threads": 6,
+      "gpu-layers": 6,
+      "batch-size": 1228
+    },
+    "perf": {
+      "tps_avg": 27.537689255682633,
+      "gpu_avg": 1092.6666666666667
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 1210,
+      "ubatch-size": 575,
+      "threads": 16,
+      "gpu-layers": 33,
+      "batch-size": 5339
+    },
+    "perf": {
+      "tps_avg": 127.55298289730847,
+      "gpu_avg": 4592.666666666667
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 141,
+      "ubatch-size": 2595,
+      "threads": 2,
+      "gpu-layers": 25,
+      "batch-size": 3394
+    },
+    "perf": {
+      "tps_avg": 47.23154962982229,
+      "gpu_avg": 3441.4285714285716
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 1239,
+      "ubatch-size": 3102,
+      "threads": 3,
+      "gpu-layers": 66,
+      "batch-size": 6211
+    },
+    "perf": {
+      "tps_avg": 127.72301303797906,
+      "gpu_avg": 4746.666666666667
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 608,
+      "ubatch-size": 1431,
+      "threads": 1,
+      "gpu-layers": 31,
+      "batch-size": 5780
+    },
+    "perf": {
+      "tps_avg": 59.12927187043974,
+      "gpu_avg": 4363.0
+    }
+  }
+]
