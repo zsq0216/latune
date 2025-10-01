@@ -247,7 +247,7 @@ class TUNINGWorkflow:
             for config, perf in self.tuner.pareto_front
         ]
 
-        with open(f"pareto_fronts/{self.hardware}/{model}-latune.json", 'w', encoding='utf-8') as f:
+        with open(f"pareto_fronts/{self.hardware}/{model}-scoot.json", 'w', encoding='utf-8') as f:
             json.dump(pareto_serializable, f, indent=2)
         print(f"Pareto 前沿已保存到 pareto_fronts/{self.hardware}/{model}-scoot.json")
 

@@ -101,10 +101,11 @@ class BaselineWorkflow:
         return out
     
     def _run_default_config(self):
-        perform = self._evaluate_configs([{}])
-        self.update_pareto_front()
-        hv = self._compute_hypervolume()
-        self.iter_hv.append(hv)
+        for i in range(50):
+            perform = self._evaluate_configs([{}])
+            self.update_pareto_front()
+            hv = self._compute_hypervolume()
+            self.iter_hv.append(hv)
 
     def _evaluate_configs(self, configs: List[Dict], init_model=False):
         """评估配置"""

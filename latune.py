@@ -6,6 +6,8 @@ from knobs import Knobs
 from surrogate_model import SurrogateModel
 from pymoo.indicators.hv import HV  # 需安装pymoo库
 from typing import List, Dict, Tuple
+import random
+import json
 
 class LaTune:
     def __init__(self, parameters_path,  objectives, delta_init=0.5, num_gpus=4):
@@ -51,7 +53,7 @@ class LaTune:
             elif self.param_types[name] == 'boolean':
                 encoded.append(1.0 if val else 0.0)
         return np.array(encoded)
-
+    
     def update_surrogate(self, window_size: int = 5):
         """更新代理模型"""
         # 准备训练数据
@@ -118,7 +120,44 @@ class LaTune:
             # config = self.handle_dependency(config)
             configs.append(config)
         return configs
+        
+    def load_configs_from_history(self, json_path):
+        """从json文件读取configs，并补齐缺失参数"""
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
+        # 如果文件里是单个dict，转成list保证一致性
+        if isinstance(data, dict):
+            data = [data]
+
+        all_configs = []
+        for item in data:
+            cfg = {}
+            raw_config = item.get("config", {})
+
+            for name, param_info in self.parameters.items():
+                if name in raw_config:
+                    cfg[name] = raw_config[name]
+                else:
+                    # 随机生成一个合理的值
+                    if self.param_types[name] == "integer":
+                        min_val = param_info["values"]["min"]
+                        max_val = param_info["values"]["max"]
+                        cfg[name] = random.randint(min_val, max_val)
+                    elif self.param_types[name] == "float":
+                        min_val = param_info["values"]["min"]
+                        max_val = param_info["values"]["max"]
+                        cfg[name] = random.uniform(min_val, max_val)
+                    elif self.param_types[name] == "enum":
+                        options = param_info["values"]
+                        cfg[name] = random.choice(options)
+                    elif self.param_types[name] == "boolean":
+                        cfg[name] = random.choice([True, False])
+
+            all_configs.append(cfg)
+
+        return all_configs
+    
     def handle_dependency(self, config):
         #config['grp-attn-w']=config['grp-attn-n']的整数倍
         if 'grp-attn-n' not in config:

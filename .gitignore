@@ -4,3 +4,4 @@ __pycache__
 *.csv
 *.out
 *.sh
+hv_progress/gen_table_cell.py

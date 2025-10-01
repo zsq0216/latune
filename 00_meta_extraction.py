@@ -62,6 +62,7 @@ class MetaFeatureExtractor:
         features["gpu_name"] = self.hardware
 
         self.features = features
+        return features
 
     def normalize(self, features: dict):
         """归一化数值 (简单缩放，按经验设上限)"""
@@ -89,25 +90,10 @@ class MetaFeatureExtractor:
         norm["gpu_mem_GB"] = features["gpu_mem_GB"] / 32       # 假设 32GB 上限
         norm["cpu_threads"] = features["cpu_threads"] / 32    # 假设 32 核
 
-        # name = (features.get("gpu_name") or "").lower()
-
-        # # 厂商 one-hot
-        # is_apple  = 1.0 if "apple"  in name else 0.0
-        # is_nvidia = 1.0 if any(k in name for k in ["nvidia", "geforce", "rtx", "tesla", "quadro"]) else 0.0
-        # is_amd    = 1.0 if any(k in name for k in ["amd", "radeon", "instinct"]) else 0.0
-
-        # base_affinity = 0.6  # unknown
-        # if is_nvidia:
-        #     base_affinity = 0.9
-        # elif is_amd:
-        #     base_affinity = 0.75
-        # elif is_apple:
-        #     base_affinity = 0.7
-
-        # norm["gpu_vendor"] = base_affinity
-        gpu_map = {"orin": 0.1, "m4": 0.2, "rtx3060": 0.3, "rtx4090": 0.6}
+        gpu_map = {"orin": 0.2, "m4": 0.3, "rtx3060": 0.4, "rtx4090": 0.6}
         norm["gpu_vendor"] = gpu_map.get(features["gpu_name"], 0)    
         self.norm = norm
+        return norm
 
     def to_vector(self, norm_features: dict):
         """按分组 + 权重拼接成向量"""
@@ -142,6 +128,7 @@ class MetaFeatureExtractor:
             vector.append(norm_features[k] * self.group_weights["hardware"])
 
         self.vector = np.array(vector, dtype=np.float32)
+        return vector
 
     def _extract_int(self, pattern, text):
         m = re.search(pattern, text)
@@ -182,7 +169,6 @@ class MetaFeatureExtractor:
         """
         os.makedirs(os.path.dirname(os.path.abspath(self.filepath)), exist_ok=True)
         record = {
-            "timestamp": self._now_ts(),
             "model_name": self.model_name,
             "hardware": self.hardware,
             "features": self.features,           # 原始提取
@@ -220,7 +206,6 @@ class MetaFeatureExtractor:
                     results.append({
                         "model_name": rec.get("model_name", ""),
                         "hardware": rec.get("hardware", ""),
-                        "timestamp": rec.get("timestamp", 0),
                         "similarity": float(sim),
                         "vector_len": int(vec.size),
                     })
@@ -237,7 +222,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Llama Configuration Optimizer')
     parser.add_argument('--device', type=str, choices=['cpu', 'gpu'], default='gpu',
                         help='Processing device (cpu or gpu)')
-    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='orin',
+    parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='rtx3060',
                        help='Processing hardware')
     parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='qwen3-4b',
                         help='qwen3-8b, phimoe-mini')
@@ -252,7 +237,7 @@ if __name__ == "__main__":
     executor = LlamaExecutor(param_types=param_types_instance,
                               device="gpu")
 
-    # print(config)
+    print(config)
     result = executor.extract_meta_feature(config, model_path=f"./../models/{model_name}.gguf")
     vector = extractor.characterize_feature(result)
 
@@ -260,3 +245,4 @@ if __name__ == "__main__":
     print(results)
     if extractor.save_record():
         print("Successfully saved!")
+

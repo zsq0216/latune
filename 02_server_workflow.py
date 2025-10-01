@@ -49,7 +49,7 @@ class TUNINGWorkflow:
     def run_workflow(self):
         """执行完整的工作流程"""
         # 步骤1-2: 初始采样和评估
-        initial_samples = self._generate_initial_samples()
+        initial_samples = self._get_initial_points()
         self._evaluate_configs(initial_samples,init_model=True)
         
         # 迭代调优（步骤3-9）
@@ -90,6 +90,9 @@ class TUNINGWorkflow:
         """生成初始样本（步骤1）"""
         return self.tuner.generate_initial_samples(5)
     
+    def _get_initial_points(self) :
+        return self.tuner.load_configs_from_history(f"pareto_fronts/m4/{self.model_name}-latune.json")
+
     def _load_metric_bounds(self, path: str) -> Dict[str, Tuple[float, float]]:
         """
         从 JSON 文件读取 {"metric": {"min": x, "max": y}, ...}
