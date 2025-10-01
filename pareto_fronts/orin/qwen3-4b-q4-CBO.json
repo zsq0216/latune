@@ -1,0 +1,67 @@
+[
+  {
+    "config": {
+      "ctx-size": 3806,
+      "ubatch-size": 3539,
+      "threads": 14,
+      "gpu-layers": 79,
+      "batch-size": 97
+    },
+    "perf": {
+      "tps_avg": 20.70081781378423,
+      "gpu_avg": 2055.0
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 1322,
+      "ubatch-size": 4088,
+      "threads": 2,
+      "gpu-layers": 77,
+      "batch-size": 5484
+    },
+    "perf": {
+      "tps_avg": 20.94409698144804,
+      "gpu_avg": 3384.5384615384614
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 1065,
+      "ubatch-size": 2305,
+      "threads": 4,
+      "gpu-layers": 80,
+      "batch-size": 6910
+    },
+    "perf": {
+      "tps_avg": 20.94281450644661,
+      "gpu_avg": 3109.0833333333335
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 624,
+      "ubatch-size": 150,
+      "threads": 8,
+      "gpu-layers": 23,
+      "batch-size": 4850
+    },
+    "perf": {
+      "tps_avg": 6.5259956407916775,
+      "gpu_avg": 1280.871794871795
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 1816,
+      "ubatch-size": 1830,
+      "threads": 7,
+      "gpu-layers": 51,
+      "batch-size": 330
+    },
+    "perf": {
+      "tps_avg": 20.926160457962798,
+      "gpu_avg": 2525.769230769231
+    }
+  }
+]

@@ -314,6 +314,9 @@ if __name__ == "__main__":
         objectives = {'tps_avg': 'max', 'gpu_avg': 'min'}
     else:
         objectives = {'tps_avg': 'max', 'mem_avg': 'min'}
+
+    print("=======START=======")
+    print(f"model: {args.model}, quant: {args.quant}, hardware: {args.hardware}")
     
     # 初始化工作流程
     workflow = TUNINGWorkflow(

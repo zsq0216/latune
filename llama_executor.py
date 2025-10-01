@@ -10,6 +10,7 @@ import pandas as pd
 import csv
 import itertools
 import logging
+import ctypes
 
 class LlamaExecutor:
     def __init__(self, 
@@ -334,7 +335,7 @@ class LlamaExecutor:
             if self.hardware == "m4": 
                 gpu_mem = self._get_mac_gpu_memory_usage()
             elif self.hardware == "orin":
-                gpu_mem = self._get_orin_ram_used_mb()-3000
+                gpu_mem = self._get_orin_cuda_used_mb()-2800
             else:
                 gpu_mem = self._get_gpu_memory_usage(proc.pid)
             return {
@@ -416,24 +417,73 @@ class LlamaExecutor:
     #         pass
     #     return 0
     
-    def _get_orin_ram_used_mb(self, pid: int) -> int:
+    # def _get_orin_ram_used_mb(self, pid: int) -> int:
+    #     """
+    #     返回指定进程的 VmRSS (MB)。
+    #     VmRSS = 进程实际占用的物理内存（驻留集大小）。
+    #     """
+    #     try:
+    #         with open(f"/proc/{pid}/status", "r") as f:
+    #             for line in f:
+    #                 if line.startswith("VmRSS:"):
+    #                     parts = line.split()
+    #                     if len(parts) >= 2:
+    #                         # VmRSS 默认单位是 kB
+    #                         return int(parts[1]) // 1024
+    #     except FileNotFoundError:
+    #         raise ValueError(f"进程 {pid} 不存在")
+    #     except Exception as e:
+    #         raise RuntimeError(f"读取 VmRSS 出错: {e}")
+    #     return 0
+
+    def _get_orin_cuda_used_mb(self) -> int:
         """
-        返回指定进程的 VmRSS (MB)。
-        VmRSS = 进程实际占用的物理内存（驻留集大小）。
+        返回当前 GPU（设备）已用内存，单位 MB（非 per-PID，全局视角）。
+        适用于 Jetson（无 nvidia-smi/NVML 的场景）。
         """
         try:
-            with open(f"/proc/{pid}/status", "r") as f:
-                for line in f:
-                    if line.startswith("VmRSS:"):
-                        parts = line.split()
-                        if len(parts) >= 2:
-                            # VmRSS 默认单位是 kB
-                            return int(parts[1]) // 1024
-        except FileNotFoundError:
-            raise ValueError(f"进程 {pid} 不存在")
-        except Exception as e:
-            raise RuntimeError(f"读取 VmRSS 出错: {e}")
-        return 0
+            lib = ctypes.CDLL("libcuda.so")
+
+            cuInit = lib.cuInit
+            cuInit.argtypes = [ctypes.c_uint]
+            if cuInit(0) != 0:
+                return 0
+
+            cuDeviceGet = lib.cuDeviceGet
+            cuDeviceGet.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.c_int]
+            dev = ctypes.c_int()
+            if cuDeviceGet(ctypes.byref(dev), 0) != 0:
+                return 0
+
+            # 创建上下文（有些 Jetson 固件只导出 v2 版本）
+            cuCtxCreate = getattr(lib, "cuCtxCreate_v2", getattr(lib, "cuCtxCreate"))
+            cuCtxCreate.argtypes = [ctypes.POINTER(ctypes.c_void_p), ctypes.c_uint, ctypes.c_int]
+            ctx = ctypes.c_void_p()
+            if cuCtxCreate(ctypes.byref(ctx), 0, dev.value) != 0:
+                return 0
+
+            # 读取 free/total
+            cuMemGetInfo = getattr(lib, "cuMemGetInfo_v2", getattr(lib, "cuMemGetInfo"))
+            cuMemGetInfo.argtypes = [ctypes.POINTER(ctypes.c_size_t), ctypes.POINTER(ctypes.c_size_t)]
+            free_b = ctypes.c_size_t()
+            total_b = ctypes.c_size_t()
+            ret = cuMemGetInfo(ctypes.byref(free_b), ctypes.byref(total_b))
+
+            # 释放上下文
+            try:
+                cuCtxDestroy = getattr(lib, "cuCtxDestroy_v2", getattr(lib, "cuCtxDestroy"))
+                cuCtxDestroy.argtypes = [ctypes.c_void_p]
+                cuCtxDestroy(ctx)
+            except Exception:
+                pass
+
+            if ret != 0 or total_b.value == 0:
+                return 0
+
+            used_mb = (total_b.value - free_b.value) // (1024 * 1024)
+            return int(used_mb)
+        except Exception:
+            return 0
 
     def _wait_for_server_ready(self, port: int, timeout: int = 30):
         """检测服务器就绪状态"""
@@ -464,14 +514,14 @@ if __name__ == "__main__":
     executor = LlamaExecutor(param_types=param_types_instance,
                               model_path="./../models/phimoe-mini-q4.gguf",
                               device="gpu")
-    results = []
-    for config in config_list:
-        print(config)
-        result = executor.run_server_performance_test(config)
-        # 把config拼接到result中
-        # result.update(config)
-        results.append(result)
-        print(result)
-
+    # results = []
+    # for config in config_list:
+    #     print(config)
+    #     result = executor.run_server_performance_test(config)
+    #     # 把config拼接到result中
+    #     # result.update(config)
+    #     results.append(result)
+    #     print(result)
+    print(executor._get_orin_cuda_used_mb())
 
 

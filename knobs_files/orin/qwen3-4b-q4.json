@@ -1,37 +1,37 @@
 {
-    "batch-size": {
-        "default": 2048,
+    "threads-batch": {
+        "default": 6,
         "type": "integer",
         "values": {
-            "min": 64,
-            "max": 4096
+            "min": 1,
+            "max": 16
         },
         "rank": 1
-    },
-    "flash-attn": {
-        "default": false,
-        "type": "boolean",
-        "values": [
-            true,
-            false
-        ],
-        "rank": 2
-    },
-    "ctx-size": {
-        "default": 4096,
-        "type": "integer",
-        "values": {
-            "min": 0,
-            "max": 1024
-        },
-        "rank": 3
     },
     "gpu-layers": {
         "default": 0,
         "type": "integer",
         "values": {
             "min": 0,
-            "max": 40
+            "max": 100
+        },
+        "rank": 2
+    },
+    "ubatch-size": {
+        "default": 512,
+        "type": "integer",
+        "values": {
+            "min": 32,
+            "max": 4096
+        },
+        "rank": 3
+    },
+    "batch-size": {
+        "default": 2048,
+        "type": "integer",
+        "values": {
+            "min": 64,
+            "max": 8192
         },
         "rank": 4
     },
@@ -44,53 +44,6 @@
         },
         "rank": 5
     },
-    "rope-scaling": {
-        "default": "linear",
-        "type": "enum",
-        "values": [
-            "none",
-            "linear",
-            "yarn"
-        ],
-        "rank": 6
-    },
-    "numa": {
-        "default": null,
-        "type": "enum",
-        "values": [
-            "distribute",
-            "isolate",
-            "numactl"
-        ],
-        "rank": 7
-    },
-    "parallel": {
-        "default": 1,
-        "type": "integer",
-        "values": {
-            "min": 1,
-            "max": 8
-        },
-        "rank": 8
-    },
-    "ubatch-size": {
-        "default": 512,
-        "type": "integer",
-        "values": {
-            "min": 32,
-            "max": 4096
-        },
-        "rank": 9
-    },
-    "threads": {
-        "default": 6,
-        "type": "integer",
-        "values": {
-            "min": 1,
-            "max": 16
-        },
-        "rank": 10
-    },
     "no-kv-offload": {
         "default": false,
         "type": "boolean",
@@ -98,34 +51,16 @@
             true,
             false
         ],
-        "rank": 11
+        "rank": 6
     },
-    "cpu-strict": {
-        "default": 0,
-        "type": "enum",
-        "values": [
-            0,
-            1
-        ],
-        "rank": 12
-    },
-    "draft": {
-        "default": 5,
+    "ctx-size": {
+        "default": 4096,
         "type": "integer",
         "values": {
-            "min": 1,
-            "max": 16
+            "min": 0,
+            "max": 8192
         },
-        "rank": 13
-    },
-    "cont-batching": {
-        "default": true,
-        "type": "boolean",
-        "values": [
-            true,
-            false
-        ],
-        "rank": 14
+        "rank": 7
     },
     "split-mode": {
         "default": "layer",
@@ -135,34 +70,54 @@
             "layer",
             "row"
         ],
-        "rank": 15
+        "rank": 8
     },
-    "threads-batch": {
+    "threads": {
         "default": 6,
         "type": "integer",
         "values": {
             "min": 1,
             "max": 16
         },
-        "rank": 16
+        "rank": 9
     },
-    "no-cont-batching": {
-        "default": false,
-        "type": "boolean",
+    "numa": {
+        "default": null,
+        "type": "enum",
         "values": [
-            true,
-            false
+            "distribute",
+            "isolate",
+            "numactl"
         ],
-        "rank": 17
+        "rank": 10
     },
-    "mlock": {
-        "default": false,
-        "type": "boolean",
+    "draft": {
+        "default": 5,
+        "type": "integer",
+        "values": {
+            "min": 1,
+            "max": 16
+        },
+        "rank": 11
+    },
+    "rope-scaling": {
+        "default": "linear",
+        "type": "enum",
         "values": [
-            true,
-            false
+            "none",
+            "linear",
+            "yarn"
         ],
-        "rank": 18
+        "rank": 12
+    },
+    "parallel": {
+        "default": 1,
+        "type": "integer",
+        "values": {
+            "min": 1,
+            "max": 8
+        },
+        "rank": 13
     },
     "no-mmap": {
         "default": false,
@@ -171,6 +126,42 @@
             true,
             false
         ],
-        "rank": 19
+        "rank": 14
+    },
+    "cpu-strict": {
+        "default": 0,
+        "type": "enum",
+        "values": [
+            0,
+            1
+        ],
+        "rank": 15
+    },
+    "cont-batching": {
+        "default": true,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 16
+    },
+    "mlock": {
+        "default": false,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 17
+    },
+    "no-cont-batching": {
+        "default": false,
+        "type": "boolean",
+        "values": [
+            true,
+            false
+        ],
+        "rank": 18
     }
 }
