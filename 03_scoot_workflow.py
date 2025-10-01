@@ -315,6 +315,9 @@ if __name__ == "__main__":
     else:
         objectives = {'tps_avg': 'max', 'mem_avg': 'min'}
     
+    print("=======START=======")
+    print(f"Running scoot on {args.hardware} for model {args.model}-{args.quant}")
+
     # 初始化工作流程
     workflow = TUNINGWorkflow(
         parameters_path=parameters_path,
