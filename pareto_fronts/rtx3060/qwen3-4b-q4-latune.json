@@ -1,15 +1,28 @@
 [
   {
     "config": {
-      "gpu-layers": 67,
-      "ubatch-size": 3060,
+      "gpu-layers": 28,
+      "ubatch-size": 1060,
       "ctx-size": 21,
-      "no-kv-offload": true,
-      "defrag-thold": 0.6982833943346716
+      "no-kv-offload": false,
+      "defrag-thold": -0.1
     },
     "perf": {
       "tps_avg": 84.84795217785977,
       "gpu_avg": 2400.0
+    }
+  },
+  {
+    "config": {
+      "ctx-size": 287,
+      "ubatch-size": 109,
+      "threads": 5,
+      "gpu-layers": 25,
+      "batch-size": 759
+    },
+    "perf": {
+      "tps_avg": 20.763842168828248,
+      "gpu_avg": 1887.2857142857142
     }
   },
   {

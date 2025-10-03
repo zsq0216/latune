@@ -42,7 +42,7 @@
     "config": {
       "gpu-layers": 62,
       "no-kv-offload": false,
-      "ctx-size": 943,
+      "ctx-size": 43,
       "ubatch-size": 977,
       "draft": 6
     },
@@ -107,7 +107,7 @@
     "config": {
       "gpu-layers": 42,
       "no-kv-offload": false,
-      "ctx-size": 161,
+      "ctx-size": 61,
       "ubatch-size": 2835,
       "draft": 3
     },
@@ -133,7 +133,7 @@
     "config": {
       "gpu-layers": 76,
       "no-kv-offload": false,
-      "ctx-size": 594,
+      "ctx-size": 94,
       "ubatch-size": 2559,
       "draft": 16
     },
@@ -270,19 +270,6 @@
     "perf": {
       "tps_avg": 44.88684503735516,
       "gpu_avg": 2334.5
-    }
-  },
-  {
-    "config": {
-      "gpu-layers": 82,
-      "no-kv-offload": false,
-      "ctx-size": 22,
-      "ubatch-size": 370,
-      "draft": 6
-    },
-    "perf": {
-      "tps_avg": 126.89920722165573,
-      "gpu_avg": 4326.0
     }
   }
 ]

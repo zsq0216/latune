@@ -190,8 +190,8 @@ class ConfigEvaluator:
         model = f"./../models/{model}.gguf"
         if method not in ["Default", "GA", "CBO", "scoot", "latune"]:
             raise ValueError("Invalid method. Choose from [Default, GA, CBO, scoot, latune]")
-        if method == 'Default':
-            return self.executor.run_server_performance_test(config={},model_path = model)
+        # if method == 'Default':
+        #     return self.executor.run_server_performance_test(config={},model_path = model)
         budget = self.fluctuation_detector.get_available_resources()
         print(f"📊 可用资源预算: {budget}")
         best_config = self._get_pareto_best(budget)

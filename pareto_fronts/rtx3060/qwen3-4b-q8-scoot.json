@@ -66,19 +66,6 @@
   },
   {
     "config": {
-      "ctx-size": 26,
-      "ubatch-size": 2424,
-      "threads": 2,
-      "gpu-layers": 59,
-      "batch-size": 1562
-    },
-    "perf": {
-      "tps_avg": 60.014363833011,
-      "gpu_avg": 4314.0
-    }
-  },
-  {
-    "config": {
       "ctx-size": 446,
       "ubatch-size": 2563,
       "threads": 12,

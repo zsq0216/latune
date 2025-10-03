@@ -1,10 +1,10 @@
 [
   {
     "config": {
-      "gpu-layers": 23,
+      "gpu-layers": 24,
       "ctx-size": 94,
-      "no-kv-offload": true,
-      "ubatch-size": 2702,
+      "no-kv-offload": false,
+      "ubatch-size": 702,
       "defrag-thold": -0.6537107391941257
     },
     "perf": {
@@ -53,19 +53,6 @@
   },
   {
     "config": {
-      "gpu-layers": 75,
-      "ctx-size": 1541,
-      "no-kv-offload": false,
-      "ubatch-size": 3893,
-      "defrag-thold": -0.09808708091176821
-    },
-    "perf": {
-      "tps_avg": 90.90671257586918,
-      "gpu_avg": 8450.0
-    }
-  },
-  {
-    "config": {
       "gpu-layers": 14,
       "ctx-size": 913,
       "no-kv-offload": false,
@@ -105,15 +92,15 @@
   },
   {
     "config": {
-      "gpu-layers": 4,
+      "gpu-layers": 5,
       "ctx-size": 631,
       "no-kv-offload": false,
       "ubatch-size": 935,
-      "defrag-thold": 0.8869590459383607
+      "defrag-thold": -0.1
     },
     "perf": {
       "tps_avg": 20.15702888330164,
-      "gpu_avg": 1331.0
+      "gpu_avg": 1573.0
     }
   },
   {
@@ -157,36 +144,28 @@
   },
   {
     "config": {
-      "gpu-layers": 25,
-      "ctx-size": 1784,
-      "no-kv-offload": true,
-      "ubatch-size": 430,
-      "defrag-thold": 0.3197103922779234
-    },
-    "perf": {
-      "tps_avg": 41.05721553313348,
-      "gpu_avg": 6178.75
-    }
-  },
-  {
-    "config": {
       "gpu-layers": 24,
-      "ctx-size": 1513,
-      "no-kv-offload": true,
-      "ubatch-size": 1816,
+      "ctx-size": 53,
+      "no-kv-offload": false,
+      "ubatch-size": 430,
       "defrag-thold": -0.16551659704241195
     },
     "perf": {
       "tps_avg": 39.06479327539541,
-      "gpu_avg": 6092.888888888889
+      "gpu_avg": 6126.8
     }
   },
   {
     "config": {
+      "gpu-layers":2,
+      "no-kv-offload": true,
+      "ctx-size": 41,
+      "ubatch-size": 512,
+      "draft": 8
     },
     "perf": {
-      "tps_avg": 18.295350895728266,
-      "gpu_avg": 413.8888888888889
+      "tps_avg": 14.713400533005442,
+      "gpu_avg": 839.8888888888889
     }
   }
 ]

@@ -498,30 +498,25 @@ class LlamaExecutor:
         
 if __name__ == "__main__":
     param_types_instance ={'gpu-layers': 'integer',
-                           'parallel': 'integer',
-                           'threads-http': 'integer'}
+                           'ctx-size': 'integer',
+                           'no-kv-offload': 'boolean',
+                           'defrag-thold': 'float',
+                           'ubatch-size': 'integer',}
     config_list =[
-        {"gpu-layers": 32, "parallel":1, "threads-http":1},
-        {"gpu-layers": 32, "parallel":2, "threads-http":1},
-        {"gpu-layers": 32, "parallel":4, "threads-http":1},
-        {"gpu-layers": 32, "parallel":1, "threads-http":2},
-        {"gpu-layers": 32, "parallel":1, "threads-http":4},
-        {"gpu-layers": 32, "parallel":2, "threads-http":2},
-        {"gpu-layers": 32, "parallel":4, "threads-http":4},
-        {"gpu-layers": 32, "parallel":6, "threads-http":6},
-        {"gpu-layers": 32, "parallel":8, "threads-http":8},
+        {"gpu-layers":25, "no-kv-offload": True, "ctx-size": 41, "ubatch-size": 512, "defrag-thold": 0.3},
+        {"gpu-layers":25, "no-kv-offload": True, "ctx-size": 41, "ubatch-size": 512, "defrag-thold": -0.1}
     ]
+
     executor = LlamaExecutor(param_types=param_types_instance,
-                              model_path="./../models/phimoe-mini-q4.gguf",
+                             model_path="./../models/phimoe-mini-q8.gguf",
                               device="gpu")
-    # results = []
-    # for config in config_list:
-    #     print(config)
-    #     result = executor.run_server_performance_test(config)
-    #     # 把config拼接到result中
-    #     # result.update(config)
-    #     results.append(result)
-    #     print(result)
-    print(executor._get_orin_cuda_used_mb())
+    results = []
+    for config in config_list:
+        print(config)
+        result = executor.run_server_performance_test(config)
+        # 把config拼接到result中
+        # result.update(config)
+        results.append(result)
+        print(result)
 
 
