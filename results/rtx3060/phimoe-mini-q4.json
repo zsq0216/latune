@@ -1,6 +1,6 @@
 [
     {
-        "tps_avg": 127.3345660882435,
+        "tps_avg": 127.6345660882435,
         "pps_avg": 572.4736050316092,
         "cpu_avg": 6.335416666666667,
         "mem_avg": 568.2213541666666,
@@ -50,7 +50,7 @@
         "model": "phimoe-mini-q4"
     },
     {
-        "tps_avg": 79.33788228240537,
+        "tps_avg": 80.33788228240537,
         "pps_avg": 154.52773170236193,
         "cpu_avg": 5.02,
         "mem_avg": 568.50625,
@@ -100,11 +100,11 @@
         "model": "phimoe-mini-q4"
     },
     {
-        "tps_avg": 13.612004998450606,
-        "pps_avg": 24.981059655525986,
-        "cpu_avg": 34.48203125,
-        "mem_avg": 4344.610677083333,
-        "gpu_avg": 362.0833333333333,
+        "tps_avg": 19.622129633578155,
+        "pps_avg": 34.76664272034939,
+        "cpu_avg": 32.43161764705882,
+        "mem_avg": 2683.5392922794117,
+        "gpu_avg": 2337.294117647059,
         "resource": "high",
         "method": "latune",
         "model": "phimoe-mini-q4"
@@ -116,11 +116,11 @@
         "model": "phimoe-mini-q4"
     },
     {
-        "tps_avg": 5.118098842545375,
-        "pps_avg": 14.765100630708218,
-        "cpu_avg": 53.65364583333333,
-        "mem_avg": 4473.093229166667,
-        "gpu_avg": 875.4,
+        "tps_avg": 4.655048193664482,
+        "pps_avg": 22.63295072068546,
+        "cpu_avg": 53.31711065573772,
+        "mem_avg": 2912.2095286885246,
+        "gpu_avg": 2470.622950819672,
         "resource": "high",
         "method": "CBO",
         "model": "phimoe-mini-q4"
@@ -136,7 +136,11 @@
         "model": "phimoe-mini-q4"
     },
     {
-        "error": "ValueError",
+        "tps_avg": 1.0,
+        "pps_avg": 1.0,
+        "cpu_avg": 32.93753019323672,
+        "mem_avg": 1106.0691425120774,
+        "gpu_avg": 1613.5265700483092,
         "resource": "high",
         "method": "GA",
         "model": "phimoe-mini-q4"

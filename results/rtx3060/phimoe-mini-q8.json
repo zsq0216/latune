@@ -1,6 +1,6 @@
 [
     {
-        "tps_avg": 90.66589209939441,
+        "tps_avg": 92.66589209939441,
         "pps_avg": 437.10659351988147,
         "cpu_avg": 5.4171875,
         "mem_avg": 618.48828125,
@@ -30,7 +30,7 @@
         "model": "phimoe-mini-q8"
     },
     {
-        "tps_avg": 90.68683270362449,
+        "tps_avg": 91.68683270362449,
         "pps_avg": 537.8221956032044,
         "cpu_avg": 5.790625,
         "mem_avg": 626.234375,
@@ -96,11 +96,11 @@
         "model": "phimoe-mini-q8"
     },
     {
-        "tps_avg": 9.12485529240382,
-        "pps_avg": 14.432096623724759,
-        "cpu_avg": 6.003341584158416,
-        "mem_avg": 7945.6009823638615,
-        "gpu_avg": 244.73267326732673,
+        "tps_avg": 10.44218636910445,
+        "pps_avg": 30.120009439276668,
+        "cpu_avg": 34.332499999999996,
+        "mem_avg": 7141.766145833333,
+        "gpu_avg": 1573.0666666666666,
         "resource": "high",
         "method": "latune",
         "model": "phimoe-mini-q8"
@@ -112,29 +112,33 @@
         "model": "phimoe-mini-q8"
     },
     {
-        "error": "ValueError",
+        "tps_avg": 1.0,
+        "pps_avg": 1.0,
+        "cpu_avg": 61.55513211382114,
+        "mem_avg": 7402.823393038618,
+        "gpu_avg": 2397.121951219512,
         "resource": "high",
         "method": "CBO",
         "model": "phimoe-mini-q8"
     },
     {
-        "tps_avg": 3.7061733578174008,
-        "pps_avg": 18.81777923879961,
-        "cpu_avg": 54.72962662337663,
-        "mem_avg": 7864.83299512987,
-        "gpu_avg": 885.2467532467532,
+        "tps_avg": 9.095607374406297,
+        "pps_avg": 24.594272468603048,
+        "cpu_avg": 22.49375,
+        "mem_avg": 7713.976814516129,
+        "gpu_avg": 2306.7741935483873,
         "resource": "high",
-        "method": "scoot",
+        "method": "GA",
         "model": "phimoe-mini-q8"
     },
     {
-        "tps_avg": 11.320023764151562,
-        "pps_avg": 23.170264899212622,
-        "cpu_avg": 21.85969827586207,
-        "mem_avg": 8151.697737068966,
-        "gpu_avg": 839.1034482758621,
+        "tps_avg": 9.554332607324026,
+        "pps_avg": 27.326871425626706,
+        "cpu_avg": 29.4876953125,
+        "mem_avg": 7442.921875,
+        "gpu_avg": 2111.0,
         "resource": "high",
-        "method": "GA",
+        "method": "scoot",
         "model": "phimoe-mini-q8"
     }
 ]

@@ -123,8 +123,8 @@ for idx, hardware in enumerate(hardwares):
 
     # 面板标注：放在坐标轴下方（相对坐标 transform=ax.transAxes）
     # x 位置可视美化，y 负值将文字放到坐标轴下方
-    ax.text(0.02, -0.22, f"{panel_tags[idx]} {hardware}",
-            transform=ax.transAxes, ha="left", va="top")
+    # ax.text(0.02, -0.22, f"{panel_tags[idx]} {hardware}",
+    #         transform=ax.transAxes, ha="left", va="top")
 
 # 统一图例：放到整张图上方
 handles = list(legend_handles.values())
