@@ -4,7 +4,7 @@
         "type": "integer",
         "values": {
             "min": 1,
-            "max": 16
+            "max": 6
         },
         "rank": 1
     },
@@ -13,7 +13,7 @@
         "type": "integer",
         "values": {
             "min": 0,
-            "max": 100
+            "max": 50
         },
         "rank": 2
     },
@@ -22,7 +22,7 @@
         "type": "integer",
         "values": {
             "min": 32,
-            "max": 4096
+            "max": 1024
         },
         "rank": 3
     },
@@ -31,16 +31,16 @@
         "type": "integer",
         "values": {
             "min": 64,
-            "max": 8192
+            "max": 2048
         },
         "rank": 4
     },
-    "defrag-thold": {
-        "default": -1.0,
-        "type": "float",
+        "ctx-size": {
+        "default": 4096,
+        "type": "integer",
         "values": {
-            "min": -1.0,
-            "max": 1.0
+            "min": 0,
+            "max": 128
         },
         "rank": 5
     },
@@ -53,12 +53,12 @@
         ],
         "rank": 6
     },
-    "ctx-size": {
-        "default": 4096,
-        "type": "integer",
+    "defrag-thold": {
+        "default": -1.0,
+        "type": "float",
         "values": {
-            "min": 0,
-            "max": 8192
+            "min": -1.0,
+            "max": 1.0
         },
         "rank": 7
     },
