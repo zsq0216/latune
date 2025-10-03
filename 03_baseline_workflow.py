@@ -101,11 +101,14 @@ class BaselineWorkflow:
         return out
     
     def _run_default_config(self):
-        for i in range(50):
-            perform = self._evaluate_configs([{}])
-            self.update_pareto_front()
-            hv = self._compute_hypervolume()
-            self.iter_hv.append(hv)
+        if self.model_name =="qwen3-4b-q4" or self.model_name =="qwen3-4b-q8":
+            default_config = {"gpu-layers":36}
+        else:   
+            default_config = {"gpu-layers":32}
+        perform = self._evaluate_configs([default_config])
+        self.update_pareto_front()
+        hv = self._compute_hypervolume()
+        self.iter_hv.append(hv)
 
     def _evaluate_configs(self, configs: List[Dict], init_model=False):
         """评估配置"""

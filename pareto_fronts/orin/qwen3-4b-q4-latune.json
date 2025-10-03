@@ -1,119 +1,80 @@
 [
   {
     "config": {
-      "batch-size": 2080,
-      "flash-attn": false,
-      "ctx-size": 512,
+      "threads-batch": 4,
+      "gpu-layers": 12,
+      "ubatch-size": 1556,
+      "batch-size": 7176,
+      "ctx-size": 3072
+    },
+    "perf": {
+      "tps_avg": 6.7005,
+      "gpu_avg": 1872.875
+    }
+  },
+  {
+    "config": {
+      "threads-batch": 2,
+      "gpu-layers": 67,
+      "ubatch-size": 3060,
+      "batch-size": 6653,
+      "ctx-size": 21
+    },
+    "perf": {
+      "tps_avg": 20.8239,
+      "gpu_avg": 2048.3333
+    }
+  },
+  {
+    "config": {
+      "threads-batch": 1,
+      "gpu-layers": 10,
+      "ubatch-size": 2363,
+      "batch-size": 2476,
+      "ctx-size": 1107
+    },
+    "perf": {
+      "tps_avg": 6.6023,
+      "gpu_avg": 1466.9583
+    }
+  },
+  {
+    "config": {
+      "threads-batch": 3,
+      "gpu-layers": 94,
+      "ubatch-size": 2336,
+      "batch-size": 111,
+      "ctx-size": 1801
+    },
+    "perf": {
+      "tps_avg": 20.8601,
+      "gpu_avg": 2545.8461
+    }
+  },
+  {
+    "config": {
+      "threads-batch": 1,
       "gpu-layers": 20,
-      "defrag-thold": 0.0
+      "ubatch-size": 242,
+      "batch-size": 868,
+      "ctx-size": 3
     },
     "perf": {
-      "tps_avg": 7.062116590640506,
-      "gpu_avg": 330.52777777777777
+      "tps_avg": 7.0859,
+      "gpu_avg": 2022.3902
     }
   },
   {
     "config": {
-      "batch-size": 291,
-      "flash-attn": false,
-      "ctx-size": 161,
-      "gpu-layers": 36,
-      "defrag-thold": 0.9384869203449226
+      "threads-batch": 3,
+      "gpu-layers": 48,
+      "ubatch-size": 203,
+      "batch-size": 1273,
+      "ctx-size": 104
     },
     "perf": {
-      "tps_avg": 13.36592428095937,
-      "gpu_avg": 1327.3684210526317
-    }
-  },
-  {
-    "config": {
-      "batch-size": 3204,
-      "flash-attn": false,
-      "ctx-size": 27,
-      "gpu-layers": 3,
-      "defrag-thold": -0.576583686484974
-    },
-    "perf": {
-      "tps_avg": 6.85000417880751,
-      "gpu_avg": -283.6842105263158
-    }
-  },
-  {
-    "config": {
-      "batch-size": 452,
-      "flash-attn": false,
-      "ctx-size": 269,
-      "gpu-layers": 38,
-      "defrag-thold": 0.8278886934804646
-    },
-    "perf": {
-      "tps_avg": 21.51352400726788,
-      "gpu_avg": 1420.25
-    }
-  },
-  {
-    "config": {
-      "batch-size": 2682,
-      "flash-attn": false,
-      "ctx-size": 478,
-      "gpu-layers": 23,
-      "defrag-thold": -0.2818841330587636
-    },
-    "perf": {
-      "tps_avg": 7.26002823054579,
-      "gpu_avg": 891.2285714285714
-    }
-  },
-  {
-    "config": {
-      "batch-size": 3556,
-      "flash-attn": false,
-      "ctx-size": 969,
-      "gpu-layers": 29,
-      "defrag-thold": 0.9979548782212253
-    },
-    "perf": {
-      "tps_avg": 8.083880171526351,
-      "gpu_avg": 1315.8387096774193
-    }
-  },
-  {
-    "config": {
-      "batch-size": 701,
-      "flash-attn": false,
-      "ctx-size": 149,
-      "gpu-layers": 23,
-      "defrag-thold": 0.49102050744924663
-    },
-    "perf": {
-      "tps_avg": 7.097578936213611,
-      "gpu_avg": 675.6388888888889
-    }
-  },
-  {
-    "config": {
-      "batch-size": 2513,
-      "flash-attn": false,
-      "ctx-size": 530,
-      "gpu-layers": 37,
-      "defrag-thold": -0.601013660203964
-    },
-    "perf": {
-      "tps_avg": 21.545079214702497,
-      "gpu_avg": 1829.5
-    }
-  },
-  {
-    "config": {
-      "batch-size": 4036,
-      "flash-attn": false,
-      "ctx-size": 610,
-      "gpu-layers": 23,
-      "defrag-thold": 0.8918876522188945
-    },
-    "perf": {
-      "tps_avg": 7.359472038337845,
-      "gpu_avg": 1061.7941176470588
+      "tps_avg": 20.9838,
+      "gpu_avg": 2845.0833
     }
   }
 ]

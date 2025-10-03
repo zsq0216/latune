@@ -1,0 +1,41 @@
+[
+  {
+    "config": {
+      "gpu-layers": 3,
+      "ctx-size": 66,
+      "defrag-thold": -0.43517665262845584,
+      "draft": 8,
+      "rope-scaling": "none"
+    },
+    "perf": {
+      "tps_avg": 11.391024489820834,
+      "gpu_avg": 193.92307692307693
+    }
+  },
+  {
+    "config": {
+      "gpu-layers": 34,
+      "ctx-size": 11,
+      "defrag-thold": -0.7395772572023649,
+      "draft": 9,
+      "rope-scaling": "none"
+    },
+    "perf": {
+      "tps_avg": 33.761780698709835,
+      "gpu_avg": 3357.6666666666665
+    }
+  },
+  {
+    "config": {
+      "gpu-layers": 74,
+      "ctx-size": 84,
+      "defrag-thold": -0.3759932777461328,
+      "draft": 16,
+      "rope-scaling": "linear"
+    },
+    "perf": {
+      "tps_avg": 34.03348863841586,
+      "gpu_avg": 3727.625
+    }
+  }
+]
