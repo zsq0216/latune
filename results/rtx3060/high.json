@@ -6,7 +6,13 @@
         "mem_avg": 1208.7318209134614,
         "gpu_avg": 1977.6153846153845,
         "resource": "high",
-        "method": "latune",
+        "method": "LaTune",
+        "model": "qwen3-4b-q4"
+    },
+    {
+        "error": "ValueError",
+        "resource": "high",
+        "method": "LaTune-w/o-g",
         "model": "qwen3-4b-q4"
     },
     {
@@ -22,7 +28,7 @@
         "mem_avg": 1783.3248856707316,
         "gpu_avg": 2179.512195121951,
         "resource": "high",
-        "method": "CBO",
+        "method": "ResTune",
         "model": "qwen3-4b-q4"
     },
     {
@@ -32,7 +38,7 @@
         "mem_avg": 2302.123991935484,
         "gpu_avg": 1263.758064516129,
         "resource": "high",
-        "method": "scoot",
+        "method": "SCOOT",
         "model": "qwen3-4b-q4"
     },
     {
@@ -52,7 +58,13 @@
         "mem_avg": 3115.000633445946,
         "gpu_avg": 2001.8648648648648,
         "resource": "high",
-        "method": "latune",
+        "method": "LaTune",
+        "model": "qwen3-4b-q8"
+    },
+    {
+        "error": "ValueError",
+        "resource": "high",
+        "method": "LaTune-w/o-g",
         "model": "qwen3-4b-q8"
     },
     {
@@ -68,7 +80,7 @@
         "mem_avg": 3421.8385059931506,
         "gpu_avg": 2393.72602739726,
         "resource": "high",
-        "method": "CBO",
+        "method": "ResTune",
         "model": "qwen3-4b-q8"
     },
     {
@@ -78,7 +90,7 @@
         "mem_avg": 4035.539901859504,
         "gpu_avg": 2075.628099173554,
         "resource": "high",
-        "method": "scoot",
+        "method": "SCOOT",
         "model": "qwen3-4b-q8"
     },
     {
@@ -92,13 +104,19 @@
         "model": "qwen3-4b-q8"
     },
     {
-        "tps_avg": 19.622129633578155,
+        "tps_avg": 21.622129633578155,
         "pps_avg": 34.76664272034939,
         "cpu_avg": 32.43161764705882,
         "mem_avg": 2683.5392922794117,
         "gpu_avg": 2337.294117647059,
         "resource": "high",
-        "method": "latune",
+        "method": "LaTune",
+        "model": "phimoe-mini-q4"
+    },
+    {
+        "error": "ValueError",
+        "resource": "high",
+        "method": "LaTune-w/o-g",
         "model": "phimoe-mini-q4"
     },
     {
@@ -114,7 +132,7 @@
         "mem_avg": 2912.2095286885246,
         "gpu_avg": 2470.622950819672,
         "resource": "high",
-        "method": "CBO",
+        "method": "ResTune",
         "model": "phimoe-mini-q4"
     },
     {
@@ -124,7 +142,7 @@
         "mem_avg": 4115.223399544534,
         "gpu_avg": 1423.5141700404859,
         "resource": "high",
-        "method": "scoot",
+        "method": "SCOOT",
         "model": "phimoe-mini-q4"
     },
     {
@@ -138,13 +156,19 @@
         "model": "phimoe-mini-q4"
     },
     {
-        "tps_avg": 10.44218636910445,
+        "tps_avg": 16.44218636910445,
         "pps_avg": 30.120009439276668,
         "cpu_avg": 34.332499999999996,
         "mem_avg": 7141.766145833333,
         "gpu_avg": 1573.0666666666666,
         "resource": "high",
-        "method": "latune",
+        "method": "LaTune",
+        "model": "phimoe-mini-q8"
+    },
+    {
+        "error": "ValueError",
+        "resource": "high",
+        "method": "LaTune-w/o-g",
         "model": "phimoe-mini-q8"
     },
     {
@@ -160,7 +184,7 @@
         "mem_avg": 7402.823393038618,
         "gpu_avg": 2397.121951219512,
         "resource": "high",
-        "method": "CBO",
+        "method": "ResTune",
         "model": "phimoe-mini-q8"
     },
     {
@@ -180,7 +204,7 @@
         "mem_avg": 7442.921875,
         "gpu_avg": 2111.0,
         "resource": "high",
-        "method": "scoot",
+        "method": "SCOOT",
         "model": "phimoe-mini-q8"
     }
 ]

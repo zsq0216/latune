@@ -39,13 +39,13 @@ class LlamaExecutor:
             "jeffrey and Sarah found one last CRT TV he didn\u2019t sell online, and they deepen their commitment to each other while playing retro games on it",
             "how to grant select method to a user on a table in oracle?",
             "what other ways do I have to identify what table to write to instead of dlp api?",
+            "I need your help writing an article. I will provide you with some background information to begin with. And then I will provide you with directions to help me write the article.",\
+            "Write linkedin post from the University of Manchester wishing ramadan kareem",
+            "What could be a cool teamname for the Continuous Engineering Unit."
             "what if I use column names and order to determine the table?",
             "what exactly is breath control?",
             "suggest images for the post",
-            "Write linkedin post from the University of Manchester wishing ramadan kareem",
             "Generate some popular hashtags",
-            "I need your help writing an article. I will provide you with some background information to begin with. And then I will provide you with directions to help me write the article.",
-            "What could be a cool teamname for the Continuous Engineering Unit."
             # "what could CEU Stand for in Spain",
             # "What could it stand for releated to IT development",
             # "What is a short name for Continuous Engineering Unit",

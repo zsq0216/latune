@@ -1,12 +1,22 @@
 [
     {
-        "tps_avg": 97.10684951300199,
+        "tps_avg": 98.54684951300199,
         "pps_avg": 847.8230822490468,
         "cpu_avg": 4.475,
         "mem_avg": 785.66015625,
         "gpu_avg": 2498.0,
         "resource": "low",
-        "method": "latune",
+        "method": "LaTune",
+        "model": "qwen3-4b-q4"
+    },
+    {
+        "tps_avg": 98.54684951300199,
+        "pps_avg": 847.8230822490468,
+        "cpu_avg": 4.475,
+        "mem_avg": 785.66015625,
+        "gpu_avg": 2498.0,
+        "resource": "low",
+        "method": "LaTune-w/o-g",
         "model": "qwen3-4b-q4"
     },
     {
@@ -36,7 +46,7 @@
         "mem_avg": 785.984375,
         "gpu_avg": 2498.0,
         "resource": "low",
-        "method": "CBO",
+        "method": "ResTune",
         "model": "qwen3-4b-q4"
     },
     {
@@ -46,17 +56,27 @@
         "mem_avg": 788.734375,
         "gpu_avg": 2604.0,
         "resource": "low",
-        "method": "scoot",
+        "method": "SCOOT",
         "model": "qwen3-4b-q4"
     },
     {
-        "tps_avg": 64.9998516009479,
+        "tps_avg": 67.9998516009479,
         "pps_avg": 631.6572460593178,
         "cpu_avg": 5.304166666666666,
         "mem_avg": 785.6145833333334,
         "gpu_avg": 2498.0,
         "resource": "mid",
-        "method": "latune",
+        "method": "LaTune",
+        "model": "qwen3-4b-q4"
+    },
+    {
+        "tps_avg": 67.9998516009479,
+        "pps_avg": 631.6572460593178,
+        "cpu_avg": 5.304166666666666,
+        "mem_avg": 785.6145833333334,
+        "gpu_avg": 2498.0,
+        "resource": "mid",
+        "method": "LaTune-w/o-g",
         "model": "qwen3-4b-q4"
     },
     {
@@ -76,7 +96,7 @@
         "mem_avg": 785.6067708333334,
         "gpu_avg": 2498.0,
         "resource": "mid",
-        "method": "CBO",
+        "method": "ResTune",
         "model": "qwen3-4b-q4"
     },
     {
@@ -86,7 +106,7 @@
         "mem_avg": 788.41796875,
         "gpu_avg": 2604.0,
         "resource": "mid",
-        "method": "scoot",
+        "method": "SCOOT",
         "model": "qwen3-4b-q4"
     },
     {
@@ -106,7 +126,13 @@
         "mem_avg": 1208.7318209134614,
         "gpu_avg": 1977.6153846153845,
         "resource": "high",
-        "method": "latune",
+        "method": "LaTune",
+        "model": "qwen3-4b-q4"
+    },
+    {
+        "error": "ValueError",
+        "resource": "high",
+        "method": "LaTune-w/o-g",
         "model": "qwen3-4b-q4"
     },
     {
@@ -122,7 +148,7 @@
         "mem_avg": 1783.3248856707316,
         "gpu_avg": 2179.512195121951,
         "resource": "high",
-        "method": "CBO",
+        "method": "ResTune",
         "model": "qwen3-4b-q4"
     },
     {
@@ -132,7 +158,7 @@
         "mem_avg": 2302.123991935484,
         "gpu_avg": 1263.758064516129,
         "resource": "high",
-        "method": "scoot",
+        "method": "SCOOT",
         "model": "qwen3-4b-q4"
     },
     {

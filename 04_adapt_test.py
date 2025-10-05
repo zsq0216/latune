@@ -4,7 +4,7 @@ import json
 # 三种资源状态配置
 resource_configs = [
     {"command": "python workload_simulator.py", "resource": "low"},
-    {"command": "python workload_simulator.py --cpu 4 --memory 24576 --gpu-calc 2 --gpu-mem 4", "resource": "mid"},
+    {"command": "python workload_simulator.py --cpu 4 --memory 24576 --gpu-calc 1 --gpu-mem 4", "resource": "mid"},
     {"command": "python workload_simulator.py --cpu 6 --memory 49152 --gpu-calc 2 --gpu-mem 6", "resource": "high"},
 ]
 
