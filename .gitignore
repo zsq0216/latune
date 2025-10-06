@@ -1,7 +1,7 @@
 __pycache__
 
+surrogate_models
 *.png
 *.csv
 *.out
 *.sh
-hv_progress/gen_table_cell.py

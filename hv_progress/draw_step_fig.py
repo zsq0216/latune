@@ -16,11 +16,13 @@ hardwares = ["rtx4090", "rtx3060", "m4", "orin"]
 # 5 个方法（集中定义风格，便于统一修改）
 # 线型/颜色/marker 在此集中定义，后续统一循环绘图
 methods = {
-    "Default": {"label": "Default", "linestyle": "-",  "marker": "o", "color": "#1f77b4"},
+    # "Default": {"label": "Default", "linestyle": "-",  "marker": "o", "color": "#1f77b4"},
     "GA": {"label": "GA", "linestyle": "--", "marker": "s", "color": "#ff7f0e"},
-    "CBO": {"label": "CBO", "linestyle": "-.", "marker": "D", "color": "#2ca02c"},
-    "scoot": {"label": "scoot", "linestyle": ":",  "marker": "^", "color": "#d62728"},
-    "latune": {"label": "latune", "linestyle": "-",  "marker": "v", "color": "#9467bd"},
+    "CBO": {"label": "ResTune", "linestyle": "-.", "marker": "D", "color": "#2ca02c"},
+    "scoot": {"label": "SCOOT", "linestyle": ":",  "marker": "^", "color": "#d62728"},
+    "wo1": {"label": "LaTune-w/o-PS", "linestyle": "--",  "marker": "x", "color": "#8c564b"},
+    "wo2": {"label": "LaTune-w/o-KT", "linestyle": "-.",  "marker": "*", "color": "#e377c2"},
+    "latune": {"label": "LaTune", "linestyle": "-",  "marker": "v", "color": "#9467bd"}
 }
 
 # 迭代信息：文件记录每 5 次迭代的 HV，一共 50 次迭代 → 10 个点
@@ -32,15 +34,16 @@ x_points = np.arange(record_every, total_iters + 1, record_every)  # [5, 10, ...
 # 画布与全局风格
 # ==============================
 plt.rcParams.update({
-    "font.size": 11,
-    "axes.labelsize": 12,
-    "axes.titlesize": 12,
+    "font.size": 18,
+    "axes.labelsize": 20,
+    "axes.titlesize": 20,
     "xtick.direction": "in",
     "ytick.direction": "in",
 })
 
-fig, axs = plt.subplots(2, 2, figsize=(10, 7), dpi=150, sharex=True, sharey=True)
+fig, axs = plt.subplots(2, 2, figsize=(10, 7), dpi=150, sharex=True, sharey=False)
 axs = axs.reshape(2, 2)
+
 
 # 统一图例的句柄收集（保证所有面板一致）
 legend_handles = {}
@@ -77,6 +80,8 @@ def plot_stair(ax, x, y, style):
                  linewidth=1.8,
                  linestyle=style["linestyle"],
                  color=style["color"],
+                marker=style["marker"],
+                markersize=7.5,  
                  label=style["label"])
     ax.plot(x, y, linestyle="none",
             marker=style["marker"], markersize=4.5,
@@ -118,7 +123,7 @@ for idx, hardware in enumerate(hardwares):
 
     # 坐标轴与标题
     ax.set_title(hardware)
-    ax.set_xlabel("Iterations")
+    ax.set_xlabel("Observations")
     ax.set_ylabel("HV")
 
     # 面板标注：放在坐标轴下方（相对坐标 transform=ax.transAxes）
@@ -135,10 +140,11 @@ plt.subplots_adjust(top=0.83, wspace=0.25, hspace=0.35)
 
 fig.legend(handles, labels,
            loc="upper center",
-           ncol=min(5, len(labels)),
+           ncol=min(3, len(labels)),
            frameon=False,
            bbox_to_anchor=(0.5, 0.97),
            handlelength=2.2,
+           borderaxespad=-0.2,    
            columnspacing=1.2)
 
 # 统一 x 轴范围（可选）
@@ -146,7 +152,7 @@ for ax in axs.ravel():
     ax.set_xlim(x_points[0], x_points[-1])
 
 # 保存与展示
-out_path = f"{model}-hv-stair-2x2.pdf"
+out_path = f"hv_stair.pdf"
 # os.makedirs(os.path.dirname(out_path), exist_ok=True)
 plt.savefig(out_path, bbox_inches="tight")
 

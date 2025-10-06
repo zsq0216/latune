@@ -50,6 +50,7 @@ class TUNINGWorkflow:
         """执行完整的工作流程"""
         # 步骤1-2: 初始采样和评估
         initial_samples = self._get_initial_points()
+        # initial_samples = self._generate_initial_samples()
         self._evaluate_configs(initial_samples,init_model=True)
         
         # 迭代调优（步骤3-9）
@@ -308,10 +309,11 @@ if __name__ == "__main__":
                        help='Processing hardware')
     parser.add_argument('--model', type=str, choices=['qwen3-4b','phimoe-mini'], default='phimoe-mini',
                         help='qwen3-8b, phimoe-mini')
-    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q8',
+    parser.add_argument('--quant', type=str, choices=['q4','q8'],default='q4',
                         help='q4, q8')
     args = parser.parse_args()
     parameters_path = f"knobs_files/{args.hardware}/{args.model}-{args.quant}.json"
+    # parameters_path = f"knobs_files/knobs_raw.json" # abaltion study
 
     if args.device == 'gpu':
         objectives = {'tps_avg': 'max', 'gpu_avg': 'min'}
@@ -342,4 +344,4 @@ if __name__ == "__main__":
     print(f"Best configuration:")
     # print(workflow.get_best_config())
 
-    workflow.save_pareto_front_and_hv(f"{args.model}-{args.quant}")
+    # workflow.save_pareto_front_and_hv(f"{args.model}-{args.quant}")
