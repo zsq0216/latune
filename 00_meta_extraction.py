@@ -120,6 +120,11 @@ class MetaFeatureExtractor:
             "gpu_vendor"
         ]
 
+        workload_keys = [
+            "task_type",     # 枚举型: {"chat", "doc_summary"}
+            "avg_input_len"  
+        ]
+
         # 拼接并加权
         vector = []
         for k in model_keys:

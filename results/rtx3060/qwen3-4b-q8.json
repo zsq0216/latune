@@ -16,7 +16,7 @@
         "mem_avg": 868.546875,
         "gpu_avg": 4314.0,
         "resource": "low",
-        "method": "LaTune-w/o-g",
+        "method": "LaTune-w/o-TS",
         "model": "qwen3-4b-q8"
     },
     {
@@ -76,7 +76,7 @@
         "mem_avg": 868.66796875,
         "gpu_avg": 4314.0,
         "resource": "mid",
-        "method": "LaTune-w/o-g",
+        "method": "LaTune-w/o-TS",
         "model": "qwen3-4b-q8"
     },
     {
@@ -132,7 +132,7 @@
     {
         "error": "ValueError",
         "resource": "high",
-        "method": "LaTune-w/o-g",
+        "method": "LaTune-w/o-TS",
         "model": "qwen3-4b-q8"
     },
     {

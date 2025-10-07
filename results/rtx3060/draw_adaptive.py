@@ -4,20 +4,25 @@
 import argparse
 import json
 from pathlib import Path
+import matplotlib
+matplotlib.use('Agg')  # 必须在 import pyplot 之前设置 防止启动GUI
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
 
+
 RESOURCE_ORDER = ["low", "mid", "high"]
-METHOD_ORDER = ["Default", "GA", "ResTune", "SCOOT", "LaTune-w/o-g", "LaTune"]
+METHOD_ORDER = ["Default", "GA", "ResTune", "SCOOT", 
+                # "LaTune-w/o-g", 
+                "LaTune"]
 
 METHOD_STYLES = {
     "Default": {"color": "#F7D58B", "hatch": ""},
     "GA": {"color": "#CAB2D6", "hatch": "//"},
     "ResTune": {"color": "#9BC985", "hatch": "xx"},
     "SCOOT": {"color": "#7DAEE0", "hatch": ".."},
-    "LaTune-w/o-g": {"color": "#736DC6", "hatch": "\\\\"},
-    "LaTune": {"color": "#DDA52D", "hatch": "-"},
+    # "LaTune-w/o-g": {"color": "#736DC6", "hatch": "\\\\"},
+    "LaTune": {"color": "#DDA52D", "hatch": "--"},
 }
 
 def load_data(path: Path):
@@ -61,21 +66,11 @@ def build_positions():
 
     return np.array(x_positions), np.array(group_centers)
 
-def plot(data_map, title=None, output=None):
-    plt.rcParams.update({
-        "font.size": 25,
-        "axes.titlesize": 25,
-        "axes.labelsize": 25,
-        "legend.fontsize": 22,
-        "xtick.labelsize": 25,
-        "ytick.labelsize": 25,
-    })
-
+def plot_subplot(ax, data_map, model_name):
+    """在指定的子图上绘制数据"""
     keys = [(r, m) for r in RESOURCE_ORDER for m in METHOD_ORDER]
     TPS_vals = [data_map.get(k, {}).get("TPS", None) for k in keys]
     x, group_centers = build_positions()
-
-    fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
 
     # === 柱状图（TPS）===
     bar_width = 0.3
@@ -83,9 +78,8 @@ def plot(data_map, title=None, output=None):
         method = METHOD_ORDER[i % len(METHOD_ORDER)]
         style = METHOD_STYLES[method]
         if y is None or y <= 1:
-            # ax.scatter(x[i], 0, marker="x", s=70, color=style["color"], zorder=5)
             ax.text(x[i], 0.05, "Error", rotation=90, ha="center",
-                    va="bottom", fontsize=18, color="#d2691e",fontweight="bold")
+                    va="bottom", fontsize=24, color="#d2691e", fontweight="bold")
         else:
             ax.bar(
                 x[i],
@@ -98,7 +92,8 @@ def plot(data_map, title=None, output=None):
                 alpha=0.9,
             )
 
-    ax.set_ylabel("TPS")
+    ax.set_ylabel("TPS", fontsize=24)
+    ax.set_title(model_name, fontsize=28, fontweight="bold")
 
     # === X 轴组标签（LOW/MID/HIGH）===
     ax.set_xticks([])
@@ -106,43 +101,64 @@ def plot(data_map, title=None, output=None):
     for ci, res in zip(group_centers, RESOURCE_ORDER):
         ax.text(
             ci, -0.06, res.upper(),
-            ha="center", va="top", fontsize=20, fontweight="bold",
+            ha="center", va="top", fontsize=24,
             transform=ax.get_xaxis_transform()
         )
 
     ax.grid(axis="y", linestyle="--", alpha=0.3)
     ax.margins(x=0.02)
 
-    # === 图例 ===
-    method_patches = [
-        Patch(facecolor=METHOD_STYLES[m]["color"], hatch=METHOD_STYLES[m]["hatch"],
-              edgecolor="black", label=m.upper())
-        for m in METHOD_ORDER
-    ]
-    ax.legend(handles=method_patches, loc="upper right", frameon=False)
-
-    fig.tight_layout()
-    if output:
-        plt.savefig(output, bbox_inches="tight")
-        print(f"[OK] 已保存图像到: {output}")
-    else:
-        plt.show()
-
 def main():
     parser = argparse.ArgumentParser(description="绘制 TPS 柱状图（按 resource×method 分组）")
     args = parser.parse_args()
 
-    model_list = ["qwen3-4b-q4", "qwen3-4b-q8", "phimoe-mini-q4", "phimoe-mini-q8"]
-    for model in model_list:
-        input_file = f"{model}.json"
-        output_file = f"adaptive-{model}.pdf"
+    # 设置全局字体大小
+    plt.rcParams.update({
+        "font.size": 24,
+        "axes.titlesize": 28,
+        "axes.labelsize": 24,
+        "legend.fontsize": 24,
+        "xtick.labelsize": 24,
+        "ytick.labelsize": 24,
+    })
 
+    model_list = ["qwen3-4b-q4", "qwen3-4b-q8", "phimoe-mini-q4", "phimoe-mini-q8"]
+    
+    # 创建2x2的子图
+    fig, axes = plt.subplots(2, 2, figsize=(16, 10), dpi=300)
+    axes = axes.flatten()  # 将2D数组展平为1D以便于迭代
+    
+    # 绘制每个子图
+    for i, model in enumerate(model_list):
+        input_file = f"{model}.json"
         in_path = Path(input_file)
         if not in_path.exists():
-            raise FileNotFoundError(f"未找到输入文件：{in_path}")
-
+            print(f"警告: 未找到输入文件：{in_path}，跳过该模型")
+            continue
+            
         data_map = load_data(in_path)
-        plot(data_map, title=None, output=output_file)
+        plot_subplot(axes[i], data_map, model)
+    
+    # === 创建图例（放在整个图的顶部）===
+    method_patches = [
+        Patch(facecolor=METHOD_STYLES[m]["color"], hatch=METHOD_STYLES[m]["hatch"],
+              edgecolor="black", label=m)
+        for m in METHOD_ORDER
+    ]
+    fig.legend(handles=method_patches, 
+               loc='upper center', 
+               bbox_to_anchor=(0.5, 1.0),
+               ncol=len(METHOD_ORDER),
+               frameon=False)
+
+    # 调整布局，为顶部图例留出空间
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.88)  # 为顶部图例留出空间
+    
+    # 保存合并后的图像
+    output_file = "adaptive-combined.pdf"
+    plt.savefig(output_file, bbox_inches="tight")
+    print(f"[OK] 已保存合并图像到: {output_file}")
 
 if __name__ == "__main__":
     main()

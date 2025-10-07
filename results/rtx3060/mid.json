@@ -16,7 +16,7 @@
         "mem_avg": 785.6145833333334,
         "gpu_avg": 2498.0,
         "resource": "mid",
-        "method": "LaTune-w/o-g",
+        "method": "LaTune-w/o-TS",
         "model": "qwen3-4b-q4"
     },
     {
@@ -76,7 +76,7 @@
         "mem_avg": 868.66796875,
         "gpu_avg": 4314.0,
         "resource": "mid",
-        "method": "LaTune-w/o-g",
+        "method": "LaTune-w/o-TS",
         "model": "qwen3-4b-q8"
     },
     {
@@ -136,7 +136,7 @@
         "mem_avg": 568.50625,
         "gpu_avg": 4326.0,
         "resource": "mid",
-        "method": "LaTune-w/o-g",
+        "method": "LaTune-w/o-TS",
         "model": "phimoe-mini-q4"
     },
     {
@@ -192,7 +192,7 @@
     {
         "error": "ValueError",
         "resource": "mid",
-        "method": "LaTune-w/o-g",
+        "method": "LaTune-w/o-TS",
         "model": "phimoe-mini-q8"
     },
     {

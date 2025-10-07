@@ -5,13 +5,15 @@
 用法：
     python gen_table_cell.py
 
-功能：
+功能更新：
 - 外层循环：methods = (Default, GA, CBO, scoot, latune)
 - 中层：models = (qwen3-4b-q4, qwen3-4b-q8, phimoe-mini-q4, phimoe-mini-q8)
 - 内层：folders = (rtx4090, rtx3060, m4, orin)
 - 从 "{folder}/{model}-{method}.json" 读取最后一个数 ×100。
-- 输出为 LaTeX 表格行，并在「每列的最大值」加粗（\textbf{}）
-- 缺失值输出 N/A，不参与最大值比较。
+- 输出为 LaTeX 表格行，并在：
+    * 每列的最大值：\\textbf{...}
+    * 每列的第二大“不同数值”：\\underline{...}
+- 缺失值输出 N/A，不参与最大/次大比较。
 """
 
 import os
@@ -27,6 +29,8 @@ METHOD_DISPLAY = {
     "scoot": "SCOOT",
     "latune": "LaTune"
 }
+
+EPS = 1e-9  # 浮点比较公差
 
 def read_last_value(path):
     """从 json 文件读取最后一个数；返回 None 表示失败。"""
@@ -56,55 +60,60 @@ def main():
                     row_values.append(v * 100)
         values.append(row_values)
 
-    # 计算每列的最大值（忽略 None）
+    # 计算每列的最大值与第二大“不同数值”（忽略 None）
     num_cols = len(MODELS) * len(FOLDERS)
-    col_max = []
+    col_top = []  # list of (top1, top2) for each column
     for col in range(num_cols):
         col_vals = [values[row][col] for row in range(len(METHODS)) if values[row][col] is not None]
-        col_max.append(max(col_vals) if col_vals else None)
+        # 去重后按降序
+        uniq_sorted = sorted(set(col_vals), reverse=True)
+        top1 = uniq_sorted[0] if len(uniq_sorted) >= 1 else None
+        top2 = uniq_sorted[1] if len(uniq_sorted) >= 2 else None
+        col_top.append((top1, top2))
 
     # 输出每行
     for row_idx, method in enumerate(METHODS):
         display_name = METHOD_DISPLAY.get(method, method)
         line_values = []
         for col_idx, v in enumerate(values[row_idx]):
+            top1, top2 = col_top[col_idx]
             if v is None:
                 line_values.append("N/A")
-            elif col_max[col_idx] is not None and v == col_max[col_idx]:
-                line_values.append(f"\\textbf{{{v:.2f}}}")
             else:
-                line_values.append(f"{v:.2f}")
+                # 按精确值（带公差）判断是否为最大或第二大“不同数值”
+                if top1 is not None and abs(v - top1) < EPS:
+                    line_values.append(f"\\textbf{{{v:.2f}}}")
+                elif top2 is not None and abs(v - top2) < EPS:
+                    line_values.append(f"\\underline{{{v:.2f}}}")
+                else:
+                    line_values.append(f"{v:.2f}")
 
+        if display_name == "LaTune":
+            # LaTune 行前加横线
+            print(r"\hline")
         line = f"{display_name} &" + " & ".join(line_values)
-        # print(line)
-        # 如需 LaTeX 换行可用：
         print(line + r" \\")
         # 或 print(line + r" \\ \hline")
 
-    # # ===== 新增：Boost 行（LaTune ÷ Default 的倍数，后缀 x）=====
+    # # ===== 如需 Boost 行，可按需保留/开启 =====
     # try:
     #     default_row = values[METHODS.index("Default")]
     #     latune_row = values[METHODS.index("latune")]
     # except ValueError:
-    #     # 极端情况：方法列表被改动
     #     default_row = None
     #     latune_row = None
-
+    #
     # boost_values = []
     # if default_row is not None and latune_row is not None:
     #     for dv, lv in zip(default_row, latune_row):
-    #         if dv is None or lv is None:
+    #         if dv is None or lv is None or abs(dv) < EPS:
     #             boost_values.append("N/A")
     #         else:
-    #             # 避免除以 0
-    #             if dv == 0:
-    #                 boost_values.append("N/A")
-    #             else:
-    #                 ratio = lv / dv
-    #                 boost_values.append(f"{ratio:.2f}x")
+    #             ratio = lv / dv
+    #             boost_values.append(f"{ratio:.2f}x")
     # else:
     #     boost_values = ["N/A"] * num_cols
-
+    #
     # boost_line = "Boost &" + " & ".join(boost_values)
     # print(boost_line + r" \\")  # 追加到表格最后一行
 
