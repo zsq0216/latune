@@ -3,17 +3,15 @@
 
 """
 用法：
-    python gen_table_cell.py
+    python gen_table_cell_gap.py
 
-功能更新：
-- 外层循环：methods = (Default, GA, CBO, scoot, latune)
+功能：
+- 外层：methods = (Default, GA, CBO, scoot, latune)
 - 中层：models = (qwen3-4b-q4, qwen3-4b-q8, phimoe-mini-q4, phimoe-mini-q8)
 - 内层：folders = (rtx4090, rtx3060, m4, orin)
 - 从 "{folder}/{model}-{method}.json" 读取最后一个数 ×100。
-- 输出为 LaTeX 表格行，并在：
-    * 每列的最大值：\\textbf{...}
-    * 每列的第二大“不同数值”：\\underline{...}
-- 缺失值输出 N/A，不参与最大/次大比较。
+- 仅输出：每一列（模型×硬件）的 “最大值 与 第二大不同值” 之差（top1 - top2）。
+  - 若该列不足两个不同的有效数值，则输出 N/A。
 """
 
 import os
@@ -23,7 +21,7 @@ MODELS = ("qwen3-4b-q4", "qwen3-4b-q8", "phimoe-mini-q4", "phimoe-mini-q8")
 METHODS = ("Default", "GA", "CBO", "scoot", "latune")
 FOLDERS = ["rtx4090", "rtx3060", "m4", "orin"]
 
-# 方法名映射表
+# 方法名映射表（此处不再逐行输出，仅保留以备扩展）
 METHOD_DISPLAY = {
     "CBO": "ResTune",
     "scoot": "SCOOT",
@@ -57,44 +55,32 @@ def main():
                 if v is None:
                     row_values.append(None)
                 else:
-                    row_values.append(v * 100)
+                    row_values.append(v * 100)  # 放大为百分制
         values.append(row_values)
 
-    # 计算每列的最大值与第二大“不同数值”（忽略 None）
+    # 计算每列的最大与第二大“不同数值”（忽略 None）
     num_cols = len(MODELS) * len(FOLDERS)
-    col_top = []  # list of (top1, top2) for each column
+    gaps = []  # 每列 top1 - top2；不足两个不同数值则为 None
     for col in range(num_cols):
         col_vals = [values[row][col] for row in range(len(METHODS)) if values[row][col] is not None]
-        # 去重后按降序
+        # 去重（按浮点公差）后降序
+        # 简单做法：直接用 set 去重；若需要更严格的公差聚类，可扩展
         uniq_sorted = sorted(set(col_vals), reverse=True)
-        top1 = uniq_sorted[0] if len(uniq_sorted) >= 1 else None
-        top2 = uniq_sorted[1] if len(uniq_sorted) >= 2 else None
-        col_top.append((top1, top2))
+        if len(uniq_sorted) >= 2:
+            top1, top2 = uniq_sorted[0], uniq_sorted[1]
+            gaps.append((top1 - top2)/top2 * 100)  # 计算百分比差距
+        else:
+            gaps.append(None)
 
-    # 输出每行
-    for row_idx, method in enumerate(METHODS):
-        display_name = METHOD_DISPLAY.get(method, method)
-        line_values = []
-        for col_idx, v in enumerate(values[row_idx]):
-            top1, top2 = col_top[col_idx]
-            if v is None:
-                line_values.append("N/A")
-            else:
-                # 按精确值（带公差）判断是否为最大或第二大“不同数值”
-                if top1 is not None and abs(v - top1) < EPS:
-                    line_values.append(f"\\textbf{{{v:.2f}}}")
-                elif top2 is not None and abs(v - top2) < EPS:
-                    line_values.append(f"\\underline{{{v:.2f}}}")
-                else:
-                    line_values.append(f"{v:.2f}")
-
-        if display_name == "LaTune":
-            # LaTune 行前加横线
-            print(r"\hline")
-        line = f"{display_name} &" + " & ".join(line_values)
-        print(line + r" \\")
-        # 或 print(line + r" \\ \hline")
-
+    # 以 LaTeX 表格行的形式输出：Top-2 Gap 行
+    line_values = []
+    for g in gaps:
+        if g is None:
+            line_values.append("N/A")
+        else:
+            line_values.append(f"{g:.2f}")
+    line = "Top-2 Gap & " + " & ".join(line_values)
+    print(line + r" \\")
 
 
 if __name__ == "__main__":

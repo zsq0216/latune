@@ -12,6 +12,13 @@ model = "phimoe-mini-q4"   # 固定的模型名（请按实际修改）
 
 # 4 个硬件（对应 2x2 面板）
 hardwares = ["rtx4090", "rtx3060", "m4", "orin"]
+# hardwares = ["RTX 4090", "RTX 3060", "Apple M4", "Orin-Nano"]
+hardware_name = {
+    "rtx4090": "RTX 4090",
+    "rtx3060": "RTX 3060",
+    "m4": "Apple M4",
+    "orin": "Orin-Nano"
+}
 
 # 5 个方法（集中定义风格，便于统一修改）
 # 线型/颜色/marker 在此集中定义，后续统一循环绘图
@@ -20,8 +27,8 @@ methods = {
     "GA": {"label": "GA", "linestyle": "--", "marker": "s", "color": "#ff7f0e"},
     "CBO": {"label": "ResTune", "linestyle": "-.", "marker": "D", "color": "#2ca02c"},
     "scoot": {"label": "SCOOT", "linestyle": ":",  "marker": "^", "color": "#d62728"},
-    "wo1": {"label": "LaTune-w/o-PS", "linestyle": "--",  "marker": "x", "color": "#8c564b"},
-    "wo2": {"label": "LaTune-w/o-KT", "linestyle": "-.",  "marker": "*", "color": "#e377c2"},
+    # "wo1": {"label": "LaTune-w/o-PS", "linestyle": "--",  "marker": "x", "color": "#8c564b"},
+    # "wo2": {"label": "LaTune-w/o-KT", "linestyle": "-.",  "marker": "*", "color": "#e377c2"},
     "latune": {"label": "LaTune", "linestyle": "-",  "marker": "v", "color": "#9467bd"}
 }
 
@@ -35,7 +42,7 @@ x_points = np.arange(record_every, total_iters + 1, record_every)  # [5, 10, ...
 # ==============================
 plt.rcParams.update({
     "font.size": 18,
-    "axes.labelsize": 20,
+    "axes.labelsize": 18,
     "axes.titlesize": 20,
     "xtick.direction": "in",
     "ytick.direction": "in",
@@ -122,8 +129,8 @@ for idx, hardware in enumerate(hardwares):
         legend_labels[mstyle["label"]] = mstyle["label"]
 
     # 坐标轴与标题
-    ax.set_title(hardware)
-    ax.set_xlabel("Observations")
+    ax.set_title(hardware_name[hardware], fontweight="bold", fontsize=16)
+    ax.set_xlabel("Iterations")
     ax.set_ylabel("HV")
 
     # 面板标注：放在坐标轴下方（相对坐标 transform=ax.transAxes）
@@ -140,7 +147,7 @@ plt.subplots_adjust(top=0.83, wspace=0.25, hspace=0.35)
 
 fig.legend(handles, labels,
            loc="upper center",
-           ncol=min(3, len(labels)),
+           ncol=min(4, len(labels)),
            frameon=False,
            bbox_to_anchor=(0.5, 0.97),
            handlelength=2.2,

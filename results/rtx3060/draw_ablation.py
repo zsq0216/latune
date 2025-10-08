@@ -114,18 +114,18 @@ def plot_one_axes(ax, data_map, title=None):
 def main():
     # 统一样式调小一些以适配 1×4 子图
     plt.rcParams.update({
-        "font.size": 16,
-        "axes.titlesize": 16,
-        "axes.labelsize": 16,
+        "font.size": 20,
+        "axes.titlesize": 20,
+        "axes.labelsize": 20,
         "legend.fontsize": 20,
-        "xtick.labelsize": 16,
-        "ytick.labelsize": 16,
+        "xtick.labelsize": 20,
+        "ytick.labelsize": 20,
     })
 
     model_list = ["qwen3-4b-q4", "qwen3-4b-q8", "phimoe-mini-q4", "phimoe-mini-q8"]
 
     # 创建 1×4 子图
-    fig, axes = plt.subplots(1, 4, figsize=(12, 4.5), dpi=150, sharey=True)
+    fig, axes = plt.subplots(1, 4, figsize=(12, 3), dpi=150, sharey=True)
     if not isinstance(axes, np.ndarray):
         axes = np.array([axes])
 
@@ -143,7 +143,7 @@ def main():
               edgecolor="black", label=m)
         for m in METHOD_ORDER
     ]
-    fig.legend(handles=method_patches, loc="upper center", ncol=2, frameon=False, bbox_to_anchor=(0.5, 1.06))
+    fig.legend(handles=method_patches, loc="upper center", ncol=2, frameon=False, bbox_to_anchor=(0.5, 1.1))
 
     fig.tight_layout()
     plt.subplots_adjust(top=0.83)  # 给顶部图例留空间

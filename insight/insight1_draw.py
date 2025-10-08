@@ -3,6 +3,8 @@
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # 必须在 import pyplot 之前设置 防止启动GUI
 import matplotlib.pyplot as plt
 
 # -----------------------------
@@ -48,29 +50,40 @@ plot_gpu = (
 # -----------------------------
 # (D) Plot tornado charts (two separate PDFs)
 # -----------------------------
-# (a) TPS
-fig_tps, ax1 = plt.subplots(figsize=(7, 5))
-ax1.barh(plot_tps.index, plot_tps["tps_delta_pct"],color = "#3083be")
-ax1.set_title("(a) TPS Relative Change (vs. default)", fontsize=13)
-ax1.set_xlabel("Relative Change (%)", fontsize=11)
-ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x*100:.0f}%"))
-ax1.axvline(0, linewidth=1)
-ax1.grid(axis="x", linestyle="--", alpha=0.6)
-plt.tight_layout()
-plt.savefig("tornado_tps.pdf", format="pdf", dpi=300, bbox_inches="tight")
-plt.close(fig_tps)
+# 创建1行2列的子图布局
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4.5), sharey=True, constrained_layout=True)
 
-# (b) VRAM
-fig_gpu, ax2 = plt.subplots(figsize=(7, 5))
-ax2.barh(plot_gpu.index, plot_gpu["gpu_delta_pct"],color = "#d27d32")
-ax2.set_title("(b) VRAM Relative Change (vs. default)", fontsize=13)
-ax2.set_xlabel("Relative Change (%)", fontsize=11)
+
+# 绘制TPS图 (左侧)
+ax1.barh(plot_tps.index, plot_tps["tps_delta_pct"], color="#3083be")
+# ax1.set_title("(a) TPS Relative Change (vs. default)", fontsize=22)
+ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x*100:.0f}%"))
+ax1.axvline(0, linewidth=1, color='k')
+ax1.grid(axis="x", linestyle="--", alpha=0.6)
+ax1.tick_params(axis="both", labelsize=26)
+
+# 绘制VRAM图 (右侧)
+ax2.barh(plot_gpu.index, plot_gpu["gpu_delta_pct"], color="#d27d32")
+# ax2.set_title("(b) VRAM Relative Change (vs. default)", fontsize=22)
 ax2.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x*100:.0f}%"))
-ax2.axvline(0, linewidth=1)
+ax2.axvline(0, linewidth=1, color='k')
 ax2.grid(axis="x", linestyle="--", alpha=0.6)
-plt.tight_layout()
-plt.savefig("tornado_gpu.pdf", format="pdf", dpi=300, bbox_inches="tight")
-plt.close(fig_gpu)
+ax2.tick_params(axis="both", labelsize=26)
+
+# 仅在左侧子图显示y轴标签（避免重复）
+ax1.set_ylabel('')
+ax2.set_ylabel('')  # 清空右侧y轴标签
+
+# 设置x轴标签（仅在底部显示）
+# 增加底部距离避免标签和x轴刻度重叠
+ax1.set_xlabel('TPS Relative Change (%)', fontsize=26, labelpad=20)
+ax2.set_xlabel('VRAM Relative Change (%)', fontsize=26, labelpad=20)
+
+# 优化布局
+plt.tight_layout(pad=3.0)  # 增加间距避免标签重叠
+plt.savefig("tornado_combined.pdf", format="pdf", dpi=300, bbox_inches="tight")
+plt.figure(figsize=(8, 2))
+plt.close(fig)
 
 # -----------------------------
 # (E) Print a sorted summary table

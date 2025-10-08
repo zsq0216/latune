@@ -38,7 +38,7 @@ load_levels = ["idle", "low", "mid", "high"]
 markers = ['o', 's', '^', 'D', 'v', 'P', '*', 'X', '>', '<', 'h', 'H']
 linestyles = ['-', '--', '-.', ':']
 
-fig = plt.figure(figsize=(12, 6))
+fig = plt.figure(figsize=(12, 4.7))
 
 for idx, config in enumerate(config_numbers):
     y_values = [raw_data.get(load, {}).get(config, 0) for load in load_levels]
@@ -89,7 +89,7 @@ plt.ylabel("TPS")
 plt.grid(True, linestyle="--", alpha=0.5)
 
 # 图例放在图内右上角
-plt.legend(title="Configuration", loc='upper right', frameon=True, framealpha=0.9)
+plt.legend(title=None, loc='upper right', frameon=True, framealpha=0.9)
 
 plt.tight_layout()
 plt.savefig("insight3_by_config_noconnect0_bigfonts.pdf", dpi=300)
