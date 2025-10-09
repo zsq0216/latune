@@ -1,173 +1,249 @@
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from scipy.stats import norm
-from sobol_seq import i4_sobol_generate  # 需要安装sobol_seq库
+from sobol_seq import i4_sobol_generate  # Requires: pip install sobol_seq
 from knobs import Knobs
 from surrogate_model import SurrogateModel
-from pymoo.indicators.hv import HV  # 需安装pymoo库
+from pymoo.indicators.hv import HV  # Requires: pip install pymoo
 from typing import List, Dict, Tuple
 import random
 import json
 
+
 class LaTune:
-    def __init__(self, parameters_path,  objectives, delta_init=0.5, num_gpus=4):
-        self.parameters = Knobs(parameters_path, 5, random = False).knobs   # 这样可以吗？
+    """
+    LaTune: A multi-objective auto-tuning framework that combines surrogate modeling,
+    Bayesian acquisition, and Pareto optimization.
+
+    Attributes:
+        parameters (dict): Parameter definitions loaded from JSON.
+        delta (float): Step size or exploration factor.
+        rf (RandomForestClassifier): Classifier for feasibility prediction.
+        surrogate (SurrogateModel): Surrogate model for objective prediction.
+        observations (list): History of observed configurations and objective values.
+        pareto_front (list): List of current Pareto-optimal solutions.
+    """
+
+    def __init__(self, parameters_path, objectives, delta_init=0.5, num_gpus=4):
+        """
+        Initialize LaTune with parameter definitions and optimization objectives.
+
+        Args:
+            parameters_path (str): Path to the JSON file defining tunable parameters.
+            objectives (dict): Mapping of objective names to direction ('min' or 'max').
+            delta_init (float, optional): Initial exploration delta. Defaults to 0.5.
+            num_gpus (int, optional): Number of GPUs available. Defaults to 4.
+        """
+        self.parameters = Knobs(parameters_path, 5, random=False).knobs  # Load top-N parameters
         self.delta = delta_init
         self.consecutive_feasible = 0
         self.rf = RandomForestClassifier(n_estimators=100)
-        self.X = []          # 存储配置特征（编码为数值）
-        self.y = []          # 存储可行性标签（0/1）
-        self.observations = []  # 存储配置及其目标值
+        self.X = []                     # Encoded configuration feature vectors
+        self.y = []                     # Feasibility labels (0/1)
+        self.observations = []          # List of (config, objective_values)
         self.iteration = 1
         self.num_gpus = num_gpus
 
-        # 参数编码元数据
+        # Parameter encoding metadata
         self.param_names = list(self.parameters.keys())
-        self.param_types = {name: params['type'] for name, params in self.parameters.items()}
+        self.param_types = {n: p['type'] for n, p in self.parameters.items()}
 
-        # 新增代理模型相关
+        # Surrogate model setup
         self.objectives = objectives
         self.num_objectives = len(objectives)
         self.surrogate = SurrogateModel(num_objectives=self.num_objectives)
-        self.observed_perf = {obj: [] for obj in objectives}  # 存储各目标观测值
-        self.pareto_front = []  # 存储帕累托解的目标值
+        self.observed_perf = {obj: [] for obj in objectives}
+        self.pareto_front = []
+
+    # -------------------------------------------------------------------------
+    # Data encoding and surrogate model
+    # -------------------------------------------------------------------------
 
     def _encode_config(self, config):
-        """将配置编码为数值向量（用于模型输入）"""
+        """
+        Encode a configuration dictionary into a normalized numeric vector.
+
+        Args:
+            config (dict): Configuration mapping parameter names to values.
+
+        Returns:
+            np.ndarray: Normalized feature vector.
+        """
         encoded = []
         for name in self.param_names:
             val = config[name]
             param_info = self.parameters[name]
-            if self.param_types[name] == 'integer':
-                # 归一化到[0,1]
+            ptype = self.param_types[name]
+
+            if ptype in ('integer', 'float'):
                 min_val = param_info['values']['min']
                 max_val = param_info['values']['max']
                 encoded.append((val - min_val) / (max_val - min_val))
-            elif self.param_types[name] == 'float':
-                min_val = param_info['values']['min']
-                max_val = param_info['values']['max']
-                encoded.append((val - min_val) / (max_val - min_val))
-            elif self.param_types[name] == 'enum':
+            elif ptype == 'enum':
                 options = param_info['values']
-                encoded.append(options.index(val) / (len(options)-1))
-            elif self.param_types[name] == 'boolean':
+                encoded.append(options.index(val) / (len(options) - 1))
+            elif ptype == 'boolean':
                 encoded.append(1.0 if val else 0.0)
+
         return np.array(encoded)
-    
+
     def update_surrogate(self, window_size: int = 5):
-        """更新代理模型"""
-        # 准备训练数据
-        # recent_data_size = min(len(self.observations),window_size)
-        recent_data_size = min(len(self.observations),window_size)
-        recent_data = self.observations[-recent_data_size:]
+        """
+        Train or update the surrogate model using the most recent observations.
+
+        Args:
+            window_size (int): Number of latest samples used for retraining.
+        """
+        recent_size = min(len(self.observations), window_size)
+        recent_data = self.observations[-recent_size:]
 
         X = [self._encode_config(c) for c, _ in recent_data]
-        y_list = [
-            [perf[obj] for _, perf in recent_data] 
-            for obj in self.objectives
-        ]
-        
-        # 训练代理模型
+        y_list = [[perf[obj] for _, perf in recent_data] for obj in self.objectives]
+
         self.surrogate.fit(X, y_list)
-        
 
     def save_surrogate(self, filename):
+        """Save the trained surrogate model to disk."""
         self.surrogate.save_model(filename)
 
+    # -------------------------------------------------------------------------
+    # Sampling and configuration generation
+    # -------------------------------------------------------------------------
+
     def generate_initial_samples(self, n_samples):
-        """使用Sobol序列生成初始配置"""
+        """
+        Generate initial configurations using Sobol sequence sampling.
+
+        Args:
+            n_samples (int): Number of configurations to generate.
+
+        Returns:
+            list[dict]: List of sampled configurations.
+        """
         dim = len(self.parameters)
         sobol_points = i4_sobol_generate(dim, n_samples)
         configs = []
+
         for point in sobol_points:
             config = {}
             for i, name in enumerate(self.param_names):
                 param_info = self.parameters[name]
-                if self.param_types[name] == 'integer':
+                ptype = self.param_types[name]
+
+                if ptype == 'integer':
                     min_val = param_info['values']['min']
                     max_val = param_info['values']['max']
                     config[name] = int(min_val + point[i] * (max_val - min_val))
-                elif self.param_types[name] == 'float':
+                elif ptype == 'float':
                     min_val = param_info['values']['min']
                     max_val = param_info['values']['max']
                     config[name] = min_val + point[i] * (max_val - min_val)
-                elif self.param_types[name] == 'enum':
+                elif ptype == 'enum':
                     options = param_info['values']
                     idx = int(point[i] * len(options))
-                    config[name] = options[min(idx, len(options)-1)]
-                elif self.param_types[name] == 'boolean':
+                    config[name] = options[min(idx, len(options) - 1)]
+                elif ptype == 'boolean':
                     config[name] = point[i] > 0.5
+
             config = self.handle_dependency(config)
             configs.append(config)
+
         return configs
 
     def generate_configs(self, n_samples=100):
-        """生成随机配置样本"""
+        """
+        Generate random configurations uniformly across parameter ranges.
+
+        Args:
+            n_samples (int, optional): Number of samples to generate. Defaults to 100.
+
+        Returns:
+            list[dict]: Randomly generated configuration list.
+        """
         configs = []
         for _ in range(n_samples):
             config = {}
-            # 遍历字典的键值对 (name, param_info)
-            for name, param_info in self.parameters.items():  # 关键修改点
-                param_type = param_info['type']  # 从 param_info 获取类型
-                if param_type == 'boolean':
+            for name, info in self.parameters.items():
+                ptype = info['type']
+                if ptype == 'boolean':
                     config[name] = np.random.choice([True, False])
-                elif param_type == 'integer':
-                    config[name] = np.random.randint(param_info['values']['min'], param_info['values']['max'] + 1)
-                elif param_type == 'enum':
-                    config[name] = np.random.choice(param_info['values'])
-                elif param_type == 'float':
-                    config[name] = np.random.uniform(param_info['values']['min'], param_info['values']['max'])
-            # config = self.handle_dependency(config)
+                elif ptype == 'integer':
+                    config[name] = np.random.randint(info['values']['min'], info['values']['max'] + 1)
+                elif ptype == 'enum':
+                    config[name] = np.random.choice(info['values'])
+                elif ptype == 'float':
+                    config[name] = np.random.uniform(info['values']['min'], info['values']['max'])
             configs.append(config)
         return configs
-        
+
     def load_configs_from_history(self, json_path):
-        """从json文件读取configs，并补齐缺失参数"""
+        """
+        Load configurations from a history JSON file and fill in missing parameters.
+
+        Args:
+            json_path (str): Path to the configuration history file.
+
+        Returns:
+            list[dict]: Completed configurations.
+        """
         with open(json_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-
-        # 如果文件里是单个dict，转成list保证一致性
         if isinstance(data, dict):
             data = [data]
 
         all_configs = []
         for item in data:
-            cfg = {}
             raw_config = item.get("config", {})
-
-            for name, param_info in self.parameters.items():
+            cfg = {}
+            for name, info in self.parameters.items():
                 if name in raw_config:
                     cfg[name] = raw_config[name]
                 else:
-                    # 随机生成一个合理的值
-                    if self.param_types[name] == "integer":
-                        min_val = param_info["values"]["min"]
-                        max_val = param_info["values"]["max"]
-                        cfg[name] = random.randint(min_val, max_val)
-                    elif self.param_types[name] == "float":
-                        min_val = param_info["values"]["min"]
-                        max_val = param_info["values"]["max"]
-                        cfg[name] = random.uniform(min_val, max_val)
-                    elif self.param_types[name] == "enum":
-                        options = param_info["values"]
-                        cfg[name] = random.choice(options)
-                    elif self.param_types[name] == "boolean":
+                    # Fill missing parameters with random valid values
+                    ptype = self.param_types[name]
+                    vals = info["values"]
+                    if ptype == "integer":
+                        cfg[name] = random.randint(vals["min"], vals["max"])
+                    elif ptype == "float":
+                        cfg[name] = random.uniform(vals["min"], vals["max"])
+                    elif ptype == "enum":
+                        cfg[name] = random.choice(vals)
+                    elif ptype == "boolean":
                         cfg[name] = random.choice([True, False])
-
             all_configs.append(cfg)
 
         return all_configs
-    
+
     def handle_dependency(self, config):
-        #config['grp-attn-w']=config['grp-attn-n']的整数倍
+        """
+        Handle inter-parameter dependencies (example: grp-attn-w = k * grp-attn-n).
+
+        Args:
+            config (dict): Configuration dictionary.
+
+        Returns:
+            dict: Updated configuration with valid dependencies applied.
+        """
         if 'grp-attn-n' not in config:
             return config
-        max_multiplier = 2048 // config['grp-attn-n'] # 2048是grp-attn-w最大值
-        config['grp-attn-w'] = config['grp-attn-n'] * np.random.randint(1, max_multiplier+1)
+        max_multiplier = 2048 // config['grp-attn-n']  # 2048 = upper bound for grp-attn-w
+        config['grp-attn-w'] = config['grp-attn-n'] * np.random.randint(1, max_multiplier + 1)
         return config
-    
+
+    # -------------------------------------------------------------------------
+    # Acquisition and optimization
+    # -------------------------------------------------------------------------
+
     def acquisition_ucb(self, config):
-        """UCB Acquisition Function"""
+        """
+        Upper Confidence Bound (UCB) acquisition function.
+
+        Args:
+            config (dict): Configuration to evaluate.
+
+        Returns:
+            float: UCB acquisition score.
+        """
         x = self._encode_config(config)
         mu, var = self.surrogate.predict([x])
         sigma = np.sqrt(var[0])
@@ -175,167 +251,147 @@ class LaTune:
         return mu[0] + beta * sigma
 
     def suggest_configurations(self, k=1):
-        """生成建议配置（核心逻辑）"""
-        # 1. 生成候选配置（此处简化：随机生成+约束过滤）
+        """
+        Suggest top-K configurations using acquisition function ranking.
+
+        Args:
+            k (int, optional): Number of configurations to return. Defaults to 1.
+
+        Returns:
+            list[dict]: Suggested configurations.
+        """
         candidates = self.generate_configs(100)
-        
-        # 4. 应用Acquisition Function排序（示例使用UCB）
         scores = []
+
         for config in candidates:
             if self.num_objectives == 1:
                 score = self.acquisition_ucb(config)
             else:
-                score = self.acquisition_ehvi(config) 
+                score = self.acquisition_ehvi(config)
             scores.append(score)
-        
-        # 选择top-k
-        selected_indices = np.argsort(scores)[-k:]
-        return [candidates[i] for i in selected_indices]
-    
+
+        top_indices = np.argsort(scores)[-k:]
+        return [candidates[i] for i in top_indices]
+
+    # -------------------------------------------------------------------------
+    # Pareto optimization
+    # -------------------------------------------------------------------------
+
     def update_pareto_front(self):
-        """更新Pareto前沿（每次新观测后调用）"""
+        """Update the Pareto front based on observed configurations."""
         new_front = []
-        # 筛选可行解
-        feasible_solutions = [
-            (config, perf) 
-            for config, perf in self.observations
-        ]
-        
-        # 支配关系计算
+        feasible_solutions = [(cfg, perf) for cfg, perf in self.observations]
+
         for candidate in feasible_solutions:
-            dominated = False
-            # 检查是否被现有前沿支配
-            for front_sol in new_front:
-                if self._dominates(front_sol[1], candidate[1]):
-                    dominated = True
-                    break
+            dominated = any(self._dominates(f[1], candidate[1]) for f in new_front)
             if not dominated:
-                # 移除被新解支配的旧解
-                new_front = [sol for sol in new_front 
-                           if not self._dominates(candidate[1], sol[1])]
+                new_front = [sol for sol in new_front if not self._dominates(candidate[1], sol[1])]
                 new_front.append(candidate)
-        
+
         self.pareto_front = new_front
 
     def _dominates(self, a: Dict[str, float], b: Dict[str, float]) -> bool:
-        """判断a是否支配b"""
-        better_in_any = False
+        """Check if solution a dominates solution b."""
+        better = False
         for obj, direction in self.objectives.items():
             if direction == 'min':
-                if a[obj] > b[obj]: return False
-                if a[obj] < b[obj]: better_in_any = True
+                if a[obj] > b[obj]:
+                    return False
+                if a[obj] < b[obj]:
+                    better = True
             else:
-                if a[obj] < b[obj]: return False
-                if a[obj] > b[obj]: better_in_any = True
-        return better_in_any
+                if a[obj] < b[obj]:
+                    return False
+                if a[obj] > b[obj]:
+                    better = True
+        return better
 
     def set_reference_point(self):
+        """Set the reference point for hypervolume calculation."""
         ref_point = []
         for obj, direction in self.objectives.items():
-            # 提取当前目标的所有观测值（通过目标名称 obj）
             values = [perf[obj] for _, perf in self.observations]
-            
-            # 根据优化方向确定参考点
-            if direction == "min":
-                # 最小化目标：参考点取最大值（确保被所有解支配）
-                ref_val = max(values)
-            else:
-                # 最大化目标：参考点取最小值（确保被所有解支配）
-                ref_val = min(values)
+            ref_val = max(values) if direction == "min" else min(values)
             ref_point.append(ref_val)
-        
         self.reference_point = ref_point
 
     def get_pareto_front(self) -> List[Tuple[Dict, Dict]]:
-        """获取当前Pareto前沿（配置+指标）"""
+        """Return the current Pareto front (config + objectives)."""
         return self.pareto_front
 
     def acquisition_ehvi(self, config):
-        """EHVI Acquisition Function (Expected Hypervolume Improvement)"""
+        """
+        Expected Hypervolume Improvement (EHVI) acquisition function (Monte Carlo approximation).
+        """
         x = self._encode_config(config)
         preds = self.surrogate.predict([x])
         means = np.array([mu[0] for mu, _ in preds])
         stds = np.array([sigma[0] for _, sigma in preds])
 
-        # 如果没有有效参考点或Pareto前沿，返回0
         if not hasattr(self, 'reference_point') or not self.pareto_front:
             return 0.0
 
-        # 当前Pareto前沿目标值（转为数组）
-        front_y = np.array([
-            [perf[obj] for obj in self.objectives] 
-            for _, perf in self.pareto_front
-        ])
-
-        # pymoo 的 HV 指标期望的是 minimization 问题，
-        # 所以我们需要统一方向（最大化指标取负）
+        front_y = np.array([[perf[obj] for obj in self.objectives] for _, perf in self.pareto_front])
         obj_dirs = [1 if self.objectives[obj] == 'min' else -1 for obj in self.objectives]
-        front_y = front_y * obj_dirs
+        front_y *= obj_dirs
         ref_point = np.array(self.reference_point) * obj_dirs
         mu_scaled = means * obj_dirs
         std_scaled = stds
 
-        # Monte Carlo 估计 EHVI（简化版）
-        samples = np.random.normal(loc=mu_scaled, scale=std_scaled, size=(128, self.num_objectives))
         hv = HV(ref_point=ref_point)
-
-        hvs = []
-        for s in samples:
-            extended = np.vstack([front_y, s])
-            hvs.append(hv.do(extended))
-
+        samples = np.random.normal(loc=mu_scaled, scale=std_scaled, size=(128, self.num_objectives))
+        hvs = [hv.do(np.vstack([front_y, s])) for s in samples]
         current_hv = hv.do(front_y)
-        ehvi_estimate = np.mean([h - current_hv for h in hvs])
-        return ehvi_estimate
+        return np.mean([h - current_hv for h in hvs])
+
+    # -------------------------------------------------------------------------
+    # Evaluation
+    # -------------------------------------------------------------------------
 
     def evaluate_pareto(self, perfs):
-        tps = np.array([perf['tps_avg'] for perf in perfs])
-        gpu = np.array([perf['gpu_avg'] for perf in perfs])
-        # mem = np.array([perf['mem_avg'] for perf in perfs])
+        """
+        Evaluate Pareto candidates using weighted normalized objectives.
 
-        # 归一化函数
-        def normalize(arr, is_benefit=True):
-            """将指标归一化到[0,1]范围
-            is_benefit=True表示指标越大越好，False表示越小越好"""
-            if is_benefit:
-                return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
-            else:
-                return (np.max(arr) - arr) / (np.max(arr) - np.min(arr))
+        Args:
+            perfs (list[dict]): Performance metrics (tps, gpu, etc.).
 
-        # 归一化处理
-        tps_norm = normalize(tps, is_benefit=True)  # tps越大越好
-        gpu_norm = normalize(gpu, is_benefit=False)  # resource越小越好
-        # mem_norm = normalize(mem, is_benefit=False)  # mem越小越好
+        Returns:
+            tuple: (best_index, best_score)
+        """
+        tps = np.array([p['tps_avg'] for p in perfs])
+        gpu = np.array([p['gpu_avg'] for p in perfs])
 
-        # 设置权重
-        w_tps = 0.7
-        w_gpu = 0.3
-        # w_mem = 0.2
+        def normalize(arr, benefit=True):
+            return (arr - np.min(arr)) / (np.max(arr) - np.min(arr)) if benefit \
+                else (np.max(arr) - arr) / (np.max(arr) - np.min(arr))
 
-        # 计算综合得分
+        tps_norm = normalize(tps, benefit=True)
+        gpu_norm = normalize(gpu, benefit=False)
+
+        w_tps, w_gpu = 0.7, 0.3
         scores = w_tps * tps_norm + w_gpu * gpu_norm
 
-        # 找到最优解
         best_idx = np.argmax(scores)
-        best_score = scores[best_idx]
-
-        return best_idx, best_score
+        return best_idx, scores[best_idx]
 
 
+# -------------------------------------------------------------------------
+# Example Usage
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # 示例参数配置
-    parameters_path = "path/to/parameters.json"  # 替换为实际路径
-    objectives = {'tps_avg': 'max', 'gpu_avg': 'min'}  # 示例目标
+    parameters_path = "path/to/parameters.json"
+    objectives = {'tps_avg': 'max', 'gpu_avg': 'min'}
+
     tuner = LaTune(parameters_path, objectives)
 
-    # 生成初始样本
+    # Generate initial Sobol samples
     initial_samples = tuner.generate_initial_samples(10)
     print("Initial Samples:", initial_samples)
 
-    # 更新代理模型
+    # Train/update surrogate
     tuner.update_surrogate()
 
-    # 生成建议配置
+    # Suggest configurations
     suggested_configs = tuner.suggest_configurations(k=5)
     print("Suggested Configurations:", suggested_configs)

@@ -1,16 +1,18 @@
 import json
 import random
 
+
 class Knobs:
     def __init__(self, json_file, knobs_num, random=False):
         """
-        初始化 Knobs 类，从 JSON 文件中加载配置。
-        
-        参数:
-            json_file (str): 包含配置的 JSON 文件路径。
+        Initialize the Knobs class by loading configuration data from a JSON file.
+
+        Args:
+            json_file (str): Path to the JSON configuration file.
+            knobs_num (int): Number of configuration entries to parse.
+            random (bool): If True, randomly select configuration entries. Defaults to False.
         """
         self.configs = self._load_json(json_file)
-        # knobs_num = len(list(self.configs.keys())) #TODO:暂时行为，如果要设计成可调节的，后续考虑
         if random:
             self.knobs = self._parse_configs_random(self.configs, knobs_num)
         else:
@@ -18,97 +20,112 @@ class Knobs:
 
     def _load_json(self, json_file):
         """
-        从 JSON 文件中加载配置。
-        
-        参数:
-            json_file (str): JSON 文件路径。
-        
-        返回:
-            dict: 加载的 JSON 数据。
+        Load configuration data from a JSON file.
+
+        Args:
+            json_file (str): Path to the JSON file.
+
+        Returns:
+            dict: Parsed JSON data.
+
+        Raises:
+            FileNotFoundError: If the JSON file does not exist.
+            ValueError: If the JSON file is not formatted correctly.
         """
         try:
             with open(json_file, 'r') as file:
                 return json.load(file)
         except FileNotFoundError:
-            raise FileNotFoundError(f"文件 {json_file} 未找到。")
+            raise FileNotFoundError(f"File '{json_file}' not found.")
         except json.JSONDecodeError:
-            raise ValueError(f"文件 {json_file} 格式错误。")
+            raise ValueError(f"File '{json_file}' contains invalid JSON format.")
 
     def _parse_configs(self, configs, knobs_num):
         """
-        解析配置数据，将每个配置项存储为类的属性。
-        
-        参数:
-            configs (dict): 加载的 JSON 数据。
-            knobs_num (int): 需要解析的配置项数量。
-        
-        返回:
-            dict: 解析后的配置项。
+        Parse a specified number of configuration entries.
+
+        Args:
+            configs (dict): Loaded JSON configuration data.
+            knobs_num (int): Number of configuration entries to parse.
+
+        Returns:
+            dict: A dictionary containing the parsed configuration entries.
         """
         knobs = {}
-        count = 0  # 用于计数已解析的配置项数量
+        count = 0  # Track the number of parsed configurations
         for knob_name, knob_info in configs.items():
-            if count >= knobs_num:  # 如果已达到指定数量，停止解析
+            if count >= knobs_num:
                 break
             knobs[knob_name] = knob_info
-            count += 1  # 每解析一个配置项，计数加1
+            count += 1
         return knobs
 
     def _parse_configs_random(self, configs, knobs_num):
         """
-        解析配置数据，从配置项中随机抽取指定数量，将每个配置项存储为类的属性。
-        
-        参数:
-            configs (dict): 加载的 JSON 数据。
-            knobs_num (int): 需要随机抽取的配置项数量。
-        
-        返回:
-            dict: 解析后的配置项。
+        Randomly select and parse a specified number of configuration entries.
+
+        Args:
+            configs (dict): Loaded JSON configuration data.
+            knobs_num (int): Number of configuration entries to randomly select.
+
+        Returns:
+            dict: A dictionary containing the randomly selected configuration entries.
         """
         knobs = {}
         keys = list(configs.keys())
-        num = min(knobs_num, len(keys))  # 确定实际抽取的数量（避免超过总项数）
-        
+        num = min(knobs_num, len(keys))  # Ensure we don't exceed the total number of available entries
+
         if num <= 0:
-            return knobs  # 处理边界情况
-        
-        # 随机抽取键（若 num < 总项数则抽样，否则直接取全部）
+            return knobs  # Handle edge cases (e.g., knobs_num <= 0)
+
+        # Randomly select keys (sample if fewer, otherwise use all)
         selected_keys = random.sample(keys, num) if num < len(keys) else keys
-        
-        # 根据选中的键填充结果
+
+        # Fill the dictionary with the selected entries
         for key in selected_keys:
             knobs[key] = configs[key]
-        
+
         return knobs
 
     def get_knob_info(self, knob_name):
         """
-        获取某个配置项的详细信息。
-        
-        参数:
-            knob_name (str): 配置项名称。
-        
-        返回:
-            dict: 配置项的详细信息。
+        Retrieve detailed information for a specific configuration entry.
+
+        Args:
+            knob_name (str): Name of the configuration entry.
+
+        Returns:
+            dict: Detailed information about the configuration entry.
+
+        Raises:
+            KeyError: If the specified configuration entry is not found.
         """
         if knob_name in self.knobs:
             return self.knobs[knob_name]
         else:
-            raise KeyError(f"未找到配置项 '{knob_name}'。")
+            raise KeyError(f"Configuration entry '{knob_name}' not found.")
 
     def __repr__(self):
+        """
+        Return a string representation of the Knobs instance.
+
+        Returns:
+            str: String representation showing parsed configuration entries.
+        """
         return f"Knobs(configs={self.knobs})"
 
 
-# 示例用法
+# Example usage
 if __name__ == "__main__":
-    # 假设 JSON 文件路径为 "knobs_config.json"
+    # Example JSON file path
     json_file = "knobs_files/cli_knobs_shap.json"
+
+    # Initialize the Knobs class (randomly select 5 configurations)
     knobs = Knobs(json_file, 5, random=True)
 
-    # 获取某个配置项的信息
+    # Retrieve information for a specific knob
     knob_name = "threads"
     knob_info = knobs.get_knob_info(knob_name)
-    # print(f"配置项 '{knob_name}' 的信息：")
-    # print(knob_info)
+
+    # Print parsed knob data
     print(knobs.knobs)
