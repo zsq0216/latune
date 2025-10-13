@@ -222,7 +222,7 @@ class SurrogateModel:
         Returns:
             SurrogateModel instance with loaded weights and scalers.
         """
-        checkpoint = torch.load(filename)
+        checkpoint = torch.load(filename, weights_only=False)
         model = cls(num_objectives=checkpoint['num_objectives'])
         model.train_x = checkpoint['train_x']
         model.train_y_list = checkpoint['train_y_list']

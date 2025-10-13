@@ -97,8 +97,8 @@ class ConfigEvaluator:
         if self.device == 'gpu':
             gpu_norm = normalize(gpu, is_benefit=False)
 
-        w_tps = 0.7
-        w_gpu = 0.3
+        w_tps = 1
+        w_gpu = 0
 
         scores = w_tps * tps_norm + w_gpu * gpu_norm
         if ablation:

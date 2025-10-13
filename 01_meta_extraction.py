@@ -40,6 +40,10 @@ class MetaFeatureExtractor:
         self.hardware = hardware
         self.filepath = filepath
 
+        self.top_similarity = None
+        self.top_model_name = None
+        self.top_hardware = None
+
     @staticmethod
     def _now_ts():
         """Return the current UNIX timestamp (seconds)."""
@@ -160,7 +164,7 @@ class MetaFeatureExtractor:
 
         # Reserved for future workload-specific features (not used yet)
         workload_keys = [
-            "task_type",     # enum-like: {"chat", "doc_summary"} (placeholder)
+            "task_type",
             "avg_input_len"
         ]
 
@@ -242,7 +246,12 @@ class MetaFeatureExtractor:
             "hardware": self.hardware,
             "features": self.features,            # raw extracted fields
             "norm": self.norm,                    # normalized features
-            "vector": self._to_list(self.vector)  # numpy array -> list for JSON
+            "vector": self._to_list(self.vector), # numpy array -> list for JSON
+            "top_record": {
+                "similarity": self.top_similarity,
+                "model_name": self.top_model_name,
+                "hardware": self.top_hardware,
+            },
         }
         with open(self.filepath, "a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -270,6 +279,10 @@ class MetaFeatureExtractor:
         top_k : int or None
             If provided, return only the top-k matches.
         """
+        self.top_similarity = None
+        self.top_model_name = None
+        self.top_hardware = None
+
         if not os.path.exists(self.filepath):
             raise FileNotFoundError(f"No such file: {self.filepath}")
 
@@ -301,6 +314,12 @@ class MetaFeatureExtractor:
         results.sort(key=lambda x: x["similarity"], reverse=True)
         if top_k is not None:
             results = results[:top_k]
+
+        if results:
+            self.top_similarity = results[0]["similarity"]
+            self.top_model_name = results[0]["model_name"]
+            self.top_hardware = results[0]["hardware"]
+
         return results
 
 
