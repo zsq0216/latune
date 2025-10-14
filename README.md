@@ -110,7 +110,7 @@ python 01_meta_extraction.py --hardware {your-hardware} --model qwen3-4b --quant
 ### Step 3: Optimal Set Construction via MOBO
 
 ```bash
-python 02_latune_workflow.py --device gpu --hardware {your-hardware} --model qwen3-4b --quant q4
+python 02_latune_workflow.py --hardware {your-hardware} --model qwen3-4b --quant q4
 ```
 
 **Outputs:**
@@ -151,7 +151,7 @@ python 04_adaptation_runtime.py --hardware {your-hardware} --model qwen3-4b --qu
 To evaluate LaTune against baseline methods:
 
 ```bash
-python baseline.py --device gpu --hardware {your-hardware} --method {method} --model qwen3-4b --quant q4
+python 03_baseline_workflow.py --hardware {your-hardware} --method {method} --model qwen3-4b --quant q4
 ```
 
 Where `{method}` can be one of the following:

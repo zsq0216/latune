@@ -1,6 +1,6 @@
 # hv_progress
 
-Hypervolume (HV) progress logs across iterations/budgets for multi-objective tuning.
+Hypervolume (HV) progress logs across iterations for multi-objective tuning.
 
 ## What’s here
 - `.json` time series per run showing how Pareto HV evolves.

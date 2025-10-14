@@ -13,7 +13,7 @@ This folder contains:
 ---
 
 ## Layout
-
+```json
 knobs_files/
 ├── knobs_raw.json # generic knobs (fallback / non-latune methods)
 ├── rtx3060/
@@ -25,7 +25,7 @@ knobs_files/
 │ └── ...
 └── orin/
 └── ...
-
+```
 
 ---
 
