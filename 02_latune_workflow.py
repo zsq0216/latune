@@ -38,8 +38,5 @@ if __name__ == "__main__":
 
     print("\n=== Tuning Results ===")
     print(f"Total evaluations: {len(workflow.history['configs'])}")
-    print("Best configuration:")
-    # print(workflow.get_best_config())
 
-    # 需要时再开启：
     workflow.save_pareto_front_and_hv(model_name)
