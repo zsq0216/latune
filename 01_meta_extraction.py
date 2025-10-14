@@ -32,6 +32,7 @@ class MetaFeatureExtractor:
         self.group_weights = {
             "model": 1,
             "hardware": 1,
+            "workload": 1
         }
         self.features = {}
         self.norm = {}
@@ -91,6 +92,9 @@ class MetaFeatureExtractor:
         # Use provided hardware label as the GPU name (maps to a vendor score later).
         features["gpu_name"] = self.hardware
 
+        features["task_type"] = "chat"  
+        features["avg_input_len"] = 64      
+
         self.features = features
         return features
 
@@ -129,6 +133,9 @@ class MetaFeatureExtractor:
         # Map common device labels to a vendor score. Extend this as needed.
         gpu_map = {"orin": 0.2, "m4": 0.3, "rtx3060": 0.4, "rtx4090": 0.6}
         norm["gpu_vendor"] = gpu_map.get(features["gpu_name"], 0)
+
+        norm["task_type"] = 0.5 
+        norm["avg_input_len"] = features["avg_input_len"] / 2048
 
         self.norm = norm
         return norm
@@ -174,6 +181,8 @@ class MetaFeatureExtractor:
             vector.append(norm_features[k] * self.group_weights["model"])
         for k in hardware_keys:
             vector.append(norm_features[k] * self.group_weights["hardware"])
+        for k in workload_keys:
+            vector.append(norm_features[k] * self.group_weights["workload"])
 
         self.vector = np.array(vector, dtype=np.float32)
         return vector

@@ -53,7 +53,7 @@ for model in ["phimoe-mini-q4"]:
         results.append(result)
 
 # Ensure output directory exists before writing if needed (not created here)
-output_path = f"results/{hardware}/{resource_rank}-1.json"
+output_path = f"results/{hardware}/{resource_rank}.json"
 with open(output_path, "w") as f:
     json.dump(results, f, indent=4)
 

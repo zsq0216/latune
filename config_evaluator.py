@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import signal
 from threading import Thread, Event
-from workload_simulator import SystemLoadGenerator
+from system_load_simulator import SystemLoadGenerator
 import sys
 import subprocess
 
