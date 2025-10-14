@@ -119,7 +119,7 @@ python 02_latune_workflow.py --hardware {your-hardware} --model qwen3-4b --quant
 * `.json` files in `pareto_fronts/{your-hardware}` defining Pareto‑optimal configurations.
 * `.json` files in `hv_progress/{your-hardware}` recording hypervolume progress.
 
-Note: When there are no historical tuning results, knowledge transfer is ineffective and the system regresses to the cold-start state.
+> Note: When there are no historical tuning results, knowledge transfer is ineffective and the system regresses to the cold-start state.
 ---
 
 ### Step 4: Select and Apply the Best Runtime Configuration
