@@ -32,7 +32,7 @@ class ConfigEvaluator:
         self.performance_log = []
         self.start_time = time.time()
         self.stream_thread = None
-        self._load_pareto_front(pareto_front_path)
+        self.pareto_front = self._load_pareto_front(pareto_front_path)
 
     def _load_pareto_front(self, filepath: str):
         """Load Pareto front data from file."""
@@ -44,8 +44,8 @@ class ConfigEvaluator:
         with open(filepath, 'r', encoding='utf-8') as f:
             pareto_data = json.load(f)
 
-        self.pareto_front = [(item["config"], item["perf"]) for item in pareto_data]
-        print(f"Pareto front loaded from {filepath}.")
+        pareto_front = [(item["config"], item["perf"]) for item in pareto_data]
+        return pareto_front
 
     def _handle_exit(self, sig, frame):
         print("\nInterrupt signal received. Cleaning up...")

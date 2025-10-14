@@ -462,8 +462,8 @@ if __name__ == "__main__":
     )
 
     # 1) Generate dataset
-    X, y = optimizer.generate_dataset(n_samples=50)
-    os.makedirs("shap_outputs", exist_ok=True)
+    X, y = optimizer.generate_dataset(n_samples=100)
+    os.makedirs(f"shap_outputs/{args.hardware}", exist_ok=True)
 
     extrema_json_path = optimizer.save_metric_extrema_from_memory(model_name)
     print(f"Saved metric extrema JSON to: {extrema_json_path}")

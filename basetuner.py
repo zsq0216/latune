@@ -265,9 +265,21 @@ class ConstrainedBayesTuner(BaseTuner):
 
         models = []
         for p in model_paths:
-            sm = SurrogateModel.load_model(p)
-            assert sm.num_objectives == 2, f"source model {p} must have 2 objectives (tps, res)"
-            models.append(sm)
+            try:
+                sm = SurrogateModel.load_model(p)
+                assert sm.num_objectives == 2, f"source model {p} must have 2 objectives (tps, res)"
+                models.append(sm)
+            except FileNotFoundError:
+                print(f"Warning: Model file not found at {p}. Skipping this model.")
+            except Exception as e:
+                print(f"Error loading model from {p}: {e}. Skipping this model.")
+        
+        if not models:  # Handle case where no models were loaded successfully
+            self.source_models = []
+            self.source_weights = np.array([])
+            self._meta_enabled = False
+            return
+
         w = np.array([rec["similarity"]], dtype=float)
         w = np.clip(w, 0.0, None)
         self.source_models = models

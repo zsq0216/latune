@@ -79,7 +79,7 @@ Example: tune a 4B quantized model with `llama.cpp` on your hardware
 ### Step 1: Parameter Selection
 
 ```bash
-python 00_paras_ranking.py --hardware {your-hardware} --model qwen3-4b --quant q4
+python 00_params_ranking.py --hardware {your-hardware} --model qwen3-4b --quant q4
 ```
 
 **Inputs:**
@@ -103,7 +103,7 @@ python 01_meta_extraction.py --hardware {your-hardware} --model qwen3-4b --quant
 
 **Outputs:**
 
-* `meta_features/records.jsonl` containing current meta‑features and matched top historical meta‑features.
+* `meta_features/records.jsonl` containing meta‑features and matched top historical meta‑features.
 
 ---
 
@@ -119,6 +119,7 @@ python 02_latune_workflow.py --device gpu --hardware {your-hardware} --model qwe
 * `.json` files in `pareto_fronts/{your-hardware}` defining Pareto‑optimal configurations.
 * `.json` files in `hv_progress/{your-hardware}` recording hypervolume progress.
 
+Note: When there are no historical tuning results, knowledge transfer is ineffective and the system regresses to the cold-start state.
 ---
 
 ### Step 4: Select and Apply the Best Runtime Configuration
@@ -136,7 +137,7 @@ resource_configs = [
 Then run the runtime adaptation:
 
 ```bash
-python 04_adaptation_runtime.py --device gpu --hardware {your-hardware} --model qwen3-4b --quant q4
+python 04_adaptation_runtime.py --hardware {your-hardware} --model qwen3-4b --quant q4 --resource low
 ```
 
 **Outputs:**
@@ -163,7 +164,7 @@ Where `{method}` can be one of the following:
 Then, to apply the runtime adaptation procedure for baselines:
 
 ```bash
-python 04_adaptation_runtime.py --device gpu --hardware {your-hardware} --model qwen3-4b --quant q4
+python 04_adaptation_runtime.py --hardware {your-hardware} --model qwen3-4b --quant q4 --resource low
 ```
 
 Finally, compare the results of LaTune with those of the baselines to assess performance differences.

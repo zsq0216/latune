@@ -271,7 +271,7 @@ if __name__ == "__main__":
                         help='Processing device (cpu or gpu)')
     parser.add_argument('--hardware', type=str, choices=['rtx3060', 'rtx4090', 'm4', 'orin'], default='rtx3060',
                         help='Processing hardware')
-    parser.add_argument('--method', type=str, choices=['Default', 'GA', 'SCOOT', 'CBO'], default='SCOOT',
+    parser.add_argument('--method', type=str, choices=['Default', 'GA', 'SCOOT', 'CBO'], default='CBO',
                         help='Optimization method')
     parser.add_argument('--model', type=str, choices=['qwen3-4b', 'phimoe-mini'], default='qwen3-4b',
                         help='Model family')
