@@ -13,14 +13,14 @@ Per-run runtime results aggregated across methods under specified budgets.
 [
     {
         "tps_avg": 44.35398137255015,
-        "gpu_avg": 3350.0,
+        "gpu_p95": 3350.0,
         "resource": "low",
         "method": "Default",
         "model": "qwen3-4b-q4"
     },
     {
         "tps_avg": 89.11730590996272,
-        "gpu_avg": 2816.0,
+        "gpu_p95": 2816.0,
         "resource": "low",
         "method": "GA",
         "model": "qwen3-4b-q4"

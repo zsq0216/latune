@@ -59,12 +59,12 @@ class ConfigEvaluator:
         if self.device == 'gpu':
             valid_pareto = [
                 (cfg, perf) for cfg, perf in self.pareto_front
-                if perf['gpu_avg'] <= budget['gpu_avail']
+                if perf['gpu_p95'] <= budget['gpu_avail']
             ]
         else:
             valid_pareto = [
                 (cfg, perf) for cfg, perf in self.pareto_front
-                if perf['mem_avg'] <= budget['mem_avail']
+                if perf['mem_p95'] <= budget['mem_avail']
             ]
 
         if not valid_pareto:
@@ -84,7 +84,7 @@ class ConfigEvaluator:
         """Evaluate Pareto front and return index and score of the best configuration."""
         tps = np.array([perf['tps_avg'] for perf in perfs])
         if self.device == 'gpu':
-            gpu = np.array([perf['gpu_avg'] for perf in perfs])
+            gpu = np.array([perf['gpu_p95'] for perf in perfs])
 
         def normalize(arr, is_benefit=True):
             """Normalize metrics to [0, 1]."""

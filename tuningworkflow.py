@@ -170,11 +170,11 @@ class TuningWorkflow:
             return
 
         y = np.array([perf["tps_avg"] for perf in perfs])
-        x = np.array([perf["gpu_avg"] for perf in perfs])
+        x = np.array([perf["gpu_p95"] for perf in perfs])
 
         plt.figure()
         plt.scatter(x, y, c="red", label="Pareto Front")
-        plt.xlabel("gpu_avg")
+        plt.xlabel("gpu_p95")
         plt.ylabel("tps_avg")
         plt.title("Pareto Front Evolution")
         plt.legend()

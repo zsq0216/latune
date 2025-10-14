@@ -170,7 +170,7 @@ class ConstrainedBayesTuner(BaseTuner):
         self.lambda_tps = float(lambda_tps)
 
         # Resource metric name
-        self.resource_metric = 'gpu_avg' if device == 'gpu' else 'mem_avg'
+        self.resource_metric = 'gpu_p95' if device == 'gpu' else 'mem_p95'
 
         # Target task GPs (trained on standardized targets)
         kernel = C(1.0, (1e-3, 1e3)) * Matern(nu=2.5) + W(1e-3, (1e-6, 1e-1))
@@ -427,8 +427,8 @@ class ScootTuner(BaseTuner):
         self.n_dim = len(self.param_names)
 
         # Resource metric name (project convention)
-        self.resource_metric = 'gpu_avg' if device == 'gpu' else 'mem_avg'
-        self._fallback_resource_metrics = ['gpu_avg', 'mem_avg']
+        self.resource_metric = 'gpu_p95' if device == 'gpu' else 'mem_p95'
+        self._fallback_resource_metrics = ['gpu_p95', 'mem_p95']
 
         # GPs (targets standardized internally)
         kernel = C(1.0, (1e-3, 1e3)) * Matern(nu=1.5) + W(1e-3, (1e-6, 1e-1))

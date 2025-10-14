@@ -7,10 +7,10 @@ class HypervolumeCalculator:
     Compute hypervolume for multi-objective optimization results.
     """
 
-    def __init__(self, bounds, maximize=["tps_avg"], minimize=["gpu_avg"]):
+    def __init__(self, bounds, maximize=["tps_avg"], minimize=["gpu_p95"]):
         """
         Args:
-            bounds (dict): e.g. {"tps_avg": (50, 200), "gpu_avg": (20, 100)}
+            bounds (dict): e.g. {"tps_avg": (50, 200), "gpu_p95": (20, 100)}
             maximize (list): objectives to maximize
             minimize (list): objectives to minimize
         """

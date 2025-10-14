@@ -20,6 +20,6 @@ Saved Pareto-optimal configurations and their objective values for each method.
     },
     "perf": {
       "tps_avg": 34.963530978907464,
-      "gpu_avg": 1938.8
+      "gpu_p95": 1938.8
     }
 }

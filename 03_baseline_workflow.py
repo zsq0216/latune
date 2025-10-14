@@ -280,9 +280,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.device == 'gpu':
-        objectives = {'tps_avg': 'max', 'gpu_avg': 'min'}
+        objectives = {'tps_avg': 'max', 'gpu_p95': 'min'}
     else:
-        objectives = {'tps_avg': 'max', 'mem_avg': 'min'}
+        objectives = {'tps_avg': 'max', 'mem_p95': 'min'}
 
     print("=======START========")
     print(f"model: {args.model}, quant: {args.quant}, hardware: {args.hardware}, method: {args.method}")

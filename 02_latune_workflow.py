@@ -14,9 +14,9 @@ if __name__ == "__main__":
     parameters_path = f"knobs_files/{args.hardware}/{args.model}-{args.quant}.json"
 
     if args.device == "gpu":
-        objectives = {"tps_avg": "max", "gpu_avg": "min"}
+        objectives = {"tps_avg": "max", "gpu_p95": "min"}
     else:
-        objectives = {"tps_avg": "max", "mem_avg": "min"}
+        objectives = {"tps_avg": "max", "mem_p95": "min"}
 
     model_name = f"{args.model}-{args.quant}"
 

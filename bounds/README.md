@@ -15,7 +15,7 @@ Reference bounds for metrics used by tuners and validators.
         "min": 0.0,
         "max": 60.12843291354783
     },
-    "gpu_avg": {
+    "gpu_p95": {
         "min": 440.77777777777777,
         "max": 2443.1666666666665
     }

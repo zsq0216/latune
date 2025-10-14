@@ -315,8 +315,8 @@ class LlamaExecutor:
             "tps_avg": np.mean(tps_list) if tps_list else 0,
             "pps_avg": np.mean(pps_list) if pps_list else 0,
             "cpu_avg": np.mean(cpu) if cpu else 0,
-            "mem_avg": np.percentile(mem, 95) if mem else 0,
-            "gpu_avg": np.percentile(gpu, 95) if gpu else 0,
+            "mem_p95": np.percentile(mem, 95) if mem else 0,
+            "gpu_p95": np.percentile(gpu, 95) if gpu else 0,
         }
 
     # ---------------------------------------------------------------------
@@ -333,7 +333,7 @@ class LlamaExecutor:
         sends a small batch of requests, then tears down the server and summarizes metrics.
 
         Returns:
-            dict: Summary metrics (tps_avg, gpu_avg, cpu_avg, mem_avg, pps_avg).
+            dict: Summary metrics (tps_avg, gpu_p95, cpu_avg, mem_p95, pps_avg).
         """
         model_path = model_path or self.model_path
         thread = None
@@ -344,7 +344,7 @@ class LlamaExecutor:
                 # Return a default "failed" result with a hardware-specific fallback GPU value.
                 return {
                     "tps_avg": 0,
-                    "gpu_avg": {
+                    "gpu_p95": {
                         "m4": 9000.0,
                         "rtx3060": 11000.0,
                         "rtx4090": 22000.0,

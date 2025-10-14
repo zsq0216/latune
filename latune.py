@@ -359,7 +359,7 @@ class LaTune:
             tuple: (best_index, best_score)
         """
         tps = np.array([p['tps_avg'] for p in perfs])
-        gpu = np.array([p['gpu_avg'] for p in perfs])
+        gpu = np.array([p['gpu_p95'] for p in perfs])
 
         def normalize(arr, benefit=True):
             return (arr - np.min(arr)) / (np.max(arr) - np.min(arr)) if benefit \
@@ -381,7 +381,7 @@ class LaTune:
 
 if __name__ == "__main__":
     parameters_path = "path/to/parameters.json"
-    objectives = {'tps_avg': 'max', 'gpu_avg': 'min'}
+    objectives = {'tps_avg': 'max', 'gpu_p95': 'min'}
 
     tuner = LaTune(parameters_path, objectives)
 

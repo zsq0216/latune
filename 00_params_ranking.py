@@ -80,12 +80,12 @@ class LlamaConfigOptimizer:
         dict
             Contains metrics such as:
               - "tps_avg": average tokens-per-second (float)
-              - "gpu_avg": average GPU utilization or memory metric (float)
+              - "gpu_p95": average GPU utilization or memory metric (float)
         """
         results = self.executor.run_server_performance_test(config)
         return {
             "tps_avg": results.get("tps_avg", 0.0),
-            "gpu_avg": results.get("gpu_avg", 0.0),
+            "gpu_p95": results.get("gpu_p95", 0.0),
         }
 
     def generate_dataset(self, n_samples=50):
@@ -101,7 +101,7 @@ class LlamaConfigOptimizer:
         -------
         (pd.DataFrame, pd.DataFrame)
             X: configurations (raw parameter values)
-            y: metrics (e.g., tps_avg, gpu_avg)
+            y: metrics (e.g., tps_avg, gpu_p95)
         """
         configs = pd.DataFrame(
             self.executor.generate_configs(self.performance_params, n_samples)
@@ -284,7 +284,7 @@ class LlamaConfigOptimizer:
         tunability_scores : dict[str, pd.Series]
             Per-metric tunability, indexed by processed feature names.
         weights : dict[str, float] or None
-            Mapping from metric name to weight. Defaults to {"tps_avg": 0.7, "gpu_avg": 0.3}.
+            Mapping from metric name to weight. Defaults to {"tps_avg": 0.7, "gpu_p95": 0.3}.
 
         Returns
         -------
@@ -292,7 +292,7 @@ class LlamaConfigOptimizer:
             Parameter-level scores sorted descending.
         """
         if weights is None:
-            weights = {"tps_avg": 0.7, "gpu_avg": 0.3}
+            weights = {"tps_avg": 0.7, "gpu_p95": 0.3}
 
         processed_X = self._preprocess_data()
         feature_index = processed_X.columns
@@ -397,7 +397,7 @@ class LlamaConfigOptimizer:
             raise ValueError("Dataset not generated yet; call generate_dataset first.")
 
         extrema = {}
-        metric_candidates = ["tps_avg", "gpu_avg"]
+        metric_candidates = ["tps_avg", "gpu_p95"]
 
         for m in metric_candidates:
             if m in self.y.columns:
@@ -443,11 +443,11 @@ if __name__ == "__main__":
         "--model",
         type=str,
         choices=["qwen3-4b", "phimoe-mini"],
-        default="phimoe-mini",
+        default="qwen3-4b",
         help="Model family (e.g., qwen3-8b, phimoe-mini)",
     )
     parser.add_argument(
-        "--quant", type=str, choices=["q4", "q8"], default="q8", help="Quantization tag"
+        "--quant", type=str, choices=["q4", "q8"], default="q4", help="Quantization tag"
     )
     args = parser.parse_args()
 
@@ -482,7 +482,7 @@ if __name__ == "__main__":
 
     # 5) Weighted aggregation to parameter-level scores and ranking
     weighted_param_scores = optimizer.compute_weighted_param_scores(
-        tunability_scores, weights={"tps_avg": 0.7, "gpu_avg": 0.3}
+        tunability_scores, weights={"tps_avg": 0.7, "gpu_p95": 0.3}
     )
 
     print("\nWeighted Param Scores (desc):")
